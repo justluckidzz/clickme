@@ -1,0 +1,57 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>tester</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+      body {
+        font-family: -apple-system, sans-serif;
+        background: #111;
+        color: #fff;
+        text-align: center;
+        padding-top: 50px;
+      }
+      .box {
+        background: #222;
+        padding: 30px;
+        border-radius: 12px;
+        display: inline-block;
+        max-width: 400px;
+      }
+      h2 {
+        color: #ff3b30;
+      }
+      .btn {
+        display: inline-block;
+        margin-top: 20px;
+        padding: 12px 24px;
+        background: #0a84ff;
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="box">
+      <h2>Test</h2>
+      <p>Testing WebKit Patch: <code>rdar://107379119</code></p>
+
+      <a class="btn" href="https://azza0x1a.github.io/test123/target.xhtml"
+        >Trigger</a
+      >
+    </div>
+
+    <div class="box" style="margin-top: 30px">
+      <h3>Iframe Trigger</h3>
+      <iframe
+        src="https://azza0x1a.github.io/test123/target.xhtml"
+        width="100%"
+        height="150"
+        style="border: 1px solid #444; background: #fff"
+      ></iframe>
+    </div>
+  </body>
+</html>
