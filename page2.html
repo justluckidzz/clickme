@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>attacker page</title>
+    <style>
+      body {
+        font-family: -apple-system, "Roboto", sans-serif;
+        background: #fff;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        height: 100vh;
+        overflow: hidden;
+        overscroll-behavior: none;
+        touch-action: none;
+        padding: 20px;
+        color: #202124;
+      }
+      .card {
+        border: 1px solid #dadce0;
+        border-radius: 8px;
+        padding: 35px 20px;
+        width: 100%;
+        max-width: 360px;
+        text-align: center;
+        margin-top: 50px;
+        box-sizing: border-box;
+      }
+      input {
+        width: 100%;
+        padding: 14px;
+        margin: 10px 0;
+        border: 1px solid #dadce0;
+        border-radius: 4px;
+        font-size: 16px;
+        box-sizing: border-box;
+      }
+      .btn {
+        width: 100%;
+        padding: 12px;
+        background: #1a73e8;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        margin-top: 15px;
+      }
+      .btn:active {
+        background: #1557b0;
+      }
+      #capture-log {
+        display: none;
+        margin-top: 20px;
+        padding: 10px;
+        border: 1px dashed #d93025;
+        color: #d93025;
+        font-weight: bold;
+        border-radius: 4px;
+        word-break: break-all;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1 style="font-size: 24px; margin-bottom: 20px; color: #202124">
+        this is the accounts.google.com page
+      </h1>
+
+      <input
+        type="text"
+        id="username"
+        placeholder="Email or username"
+        autocomplete="off"
+      />
+      <input
+        type="password"
+        id="password"
+        placeholder="Enter your password"
+        autocomplete="off"
+      />
+
+      <button class="btn" onclick="submitLogin()">next</button>
+
+      <div id="capture-log">
+        CAPTURED: <br /><span id="captured-creds"></span>
+      </div>
+    </div>
+
+    <script>
+      const logArea = document.getElementById("capture-log");
+      const credsSpan = document.getElementById("captured-creds");
+
+      function submitLogin() {
+        const u = document.getElementById("username").value;
+        const p = document.getElementById("password").value;
+
+        if (u && p) {
+          credsSpan.innerText = u + " : " + p;
+          logArea.style.display = "block";
+        }
+      }
+    </script>
+  </body>
+</html>
