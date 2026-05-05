@@ -83,24 +83,25 @@
         background: #fff;
       }
 
-      #fake-content {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: calc(100vh - 56px);
-        border: none;
-        display: block;
-      }
-
       #fake-bar {
         position: absolute;
         top: 0;
         left: 0;
         width: 100%;
+        height: 56px;
         object-fit: contain;
         display: block;
-        border-top: 1px solid #e0e0e0;
+        border-bottom: 1px solid #e0e0e0;
+      }
+
+      #fake-content {
+        position: absolute;
+        top: 56px;
+        left: 0;
+        width: 100%;
+        height: calc(100vh - 56px);
+        border: none;
+        display: block;
       }
     </style>
   </head>
@@ -114,25 +115,41 @@
         </svg>
       </div>
       <h2>scroll down to redirect to accounts.google.com</h2>
+      <div class="arrow">↓</div>
     </div>
 
     <div id="fake-ui">
-      <iframe id="fake-content" src="2.html"></iframe>
       <img id="fake-bar" src="urlbar-google.jpg" alt="Address Bar" />
+      <iframe id="fake-content" src="2.html"></iframe>
     </div>
 
     <script>
       let active = false;
 
-      window.addEventListener("scroll", () => {
-        if (window.scrollY > 60 && !active) {
-          active = true;
+      window.addEventListener(
+        "scroll",
+        () => {
+          if (window.scrollY > 60 && !active) {
+            active = true;
 
-          document.getElementById("fake-ui").style.display = "block";
+            document.getElementById("fake-ui").style.display = "block";
 
-          window.scrollTo(0, 0);
-        }
-      });
+            document.body.style.overflow = "hidden";
+            document.documentElement.style.overflow = "hidden";
+          }
+        },
+        { passive: true },
+      );
+
+      document.addEventListener(
+        "touchmove",
+        (e) => {
+          if (active) {
+            e.preventDefault();
+          }
+        },
+        { passive: false },
+      );
     </script>
   </body>
 </html>
